@@ -49,6 +49,7 @@ interface Appointment {
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
   reason: string | null;
   symptoms: string | null;
+  videoRoomUrl?: string | null;
 }
 
 interface PatientDashboardClientProps {
@@ -360,6 +361,14 @@ export default function PatientDashboardClient({
                       </div>
 
                       <div className="flex items-center gap-2 self-end md:self-center">
+                        {appt.videoRoomUrl && appt.status === "CONFIRMED" && (
+                          <Link
+                            href={`/patient/appointments/${appt.id}/session`}
+                            className="inline-flex items-center justify-center gap-1.5 p-2 px-3 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white text-xs font-bold rounded-lg transition cursor-pointer shadow-sm shadow-teal-600/10"
+                          >
+                            <Video className="h-3.5 w-3.5" /> Join Session
+                          </Link>
+                        )}
                         <button
                           onClick={() => handleOpenReschedule(appt)}
                           className="inline-flex items-center justify-center gap-1.5 p-2 px-3 border border-slate-200 dark:border-slate-800 hover:border-teal-500/30 dark:hover:border-teal-550/30 text-xs font-semibold rounded-lg hover:text-teal-600 dark:hover:text-teal-400 transition cursor-pointer"

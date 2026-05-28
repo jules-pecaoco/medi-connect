@@ -5,6 +5,8 @@ import db from "@/lib/db";
 import { triggerNotification } from "@/lib/pusher";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { createDailyRoom } from "@/lib/daily";
+import { combineDateAndTime } from "@/lib/date-utils";
 
 const createBookingSchema = z.object({
   slotId: z.string().min(1, "Time slot is required"),
@@ -77,6 +79,24 @@ export async function createAppointment(raw: unknown) {
 
       return appt;
     });
+
+    // 4. Create Daily.co room and update appointment (outside prisma transaction to prevent block locks)
+    let videoRoomUrl: string | null = null;
+    try {
+      const slotEnd = combineDateAndTime(appointment.timeSlot.date, appointment.timeSlot.endTime);
+      const expTimestamp = Math.floor((slotEnd.getTime() + 2 * 60 * 60 * 1000) / 1000); // 2 hours buffer
+      
+      videoRoomUrl = await createDailyRoom(appointment.id, expTimestamp);
+      if (videoRoomUrl) {
+        await db.appointment.update({
+          where: { id: appointment.id },
+          data: { videoRoomUrl },
+        });
+        appointment.videoRoomUrl = videoRoomUrl;
+      }
+    } catch (e) {
+      console.error("Daily.co room creation failed during booking:", e);
+    }
 
     const patientName = patient.user.name || "A patient";
     const doctorName = appointment.doctor.user.name || "A doctor";
@@ -346,5 +366,54 @@ export async function getDoctorAppointments() {
   } catch (error) {
     console.error("getDoctorAppointments error:", error);
     return { success: false as const, error: "Failed to fetch appointments" };
+  }
+}
+
+/** Complete an appointment, record notes & prescriptions, and notify the patient */
+export async function completeAppointment(appointmentId: string, notes: string, prescription: string) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id || session.user.role !== "DOCTOR") {
+      return { success: false as const, error: "Unauthorized. Doctors only." };
+    }
+
+    const appt = await db.appointment.findUnique({
+      where: { id: appointmentId },
+      include: {
+        doctor: { select: { userId: true, user: { select: { name: true } } } },
+        patient: { select: { userId: true } },
+      },
+    });
+
+    if (!appt) {
+      return { success: false as const, error: "Appointment not found." };
+    }
+
+    if (appt.doctor.userId !== session.user.id) {
+      return { success: false as const, error: "Forbidden. You are not the assigned doctor for this session." };
+    }
+
+    const updated = await db.appointment.update({
+      where: { id: appointmentId },
+      data: {
+        notes,
+        prescription,
+        status: "COMPLETED",
+      },
+    });
+
+    // Notify the patient that their medical record has been updated
+    await triggerNotification(`patient-${appt.patient.userId}`, "appointment.completed", {
+      title: "Medical Record Available",
+      message: `Dr. ${appt.doctor.user.name} has completed your session and logged notes & prescriptions.`,
+    });
+
+    revalidatePath("/patient/dashboard");
+    revalidatePath("/doctor/dashboard");
+
+    return { success: true as const, data: updated };
+  } catch (error: any) {
+    console.error("completeAppointment error:", error);
+    return { success: false as const, error: error.message || "Failed to complete consultation." };
   }
 }

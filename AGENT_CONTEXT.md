@@ -398,7 +398,7 @@ Only proceed after current phase is manually verified working.
 - [ ] Appointment booking
 - [ ] Reschedule/cancel
 - [ ] Real-time notifications
-- [ ] Video consultation
+- [x] Video consultation
 - [ ] Consultation notes
 - [ ] Prescription records
 - [ ] Patient medical records
@@ -494,7 +494,7 @@ When conflicts occur:
 
 ## Current Phase
 
-PHASE: 5 — Consultation Session
+PHASE: 6 — Medical Records
 
 STATUS: Not started
 
@@ -530,9 +530,9 @@ STATUS: Not started
 
 ### Phase 5
 
-- [ ] Daily.co room creation
-- [ ] Join session flow
-- [ ] Embedded consultation
+- [x] Daily.co room creation
+- [x] Join session flow
+- [x] Embedded consultation
 
 ### Phase 6
 
@@ -602,7 +602,12 @@ None currently.
 ./CLAUDE.md
 ./eslint.config.mjs
 ./lib/date-utils.ts
+./lib/daily.ts
 ./lib/db.ts
+./app/(patient)/patient/appointments/[id]/session/page.tsx
+./app/(patient)/patient/appointments/[id]/session/PatientSessionClient.tsx
+./app/(doctor)/doctor/appointments/[id]/session/page.tsx
+./app/(doctor)/doctor/appointments/[id]/session/DoctorSessionClient.tsx
 ./middleware.ts
 ./package.json
 ./package-lock.json
