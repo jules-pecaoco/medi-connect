@@ -490,13 +490,11 @@ When conflicts occur:
 2. Prioritize latest stable conventions
 3. Prioritize working implementation
 
----
-
 # SESSION STATE
 
 ## Current Phase
 
-PHASE: 3 — AI Recommendation
+PHASE: 4 — Appointment Booking
 
 STATUS: Not started
 
@@ -520,9 +518,9 @@ STATUS: Not started
 
 ### Phase 3
 
-- [ ] Symptom input
-- [ ] AI recommendation route
-- [ ] Recommendation results UI
+- [x] Symptom input
+- [x] AI recommendation route
+- [x] Recommendation results UI
 
 ### Phase 4
 
@@ -551,7 +549,7 @@ STATUS: Not started
 - Auth.js authentication
 - Pusher real-time notifications
 - Daily.co video consultations
-- Claude-based recommendation engine
+- Gemini-based recommendation engine (replacing Claude as per user specifications using gemini-1.5-flash)
 - Downgraded to Prisma 6 to maintain standard env var datasource URL patterns in schema.prisma
 - UTC date standardizations (all date searches/seeding normalize to midnight UTC to maintain absolute consistency across local node, database query parameters, and Vercel edge times)
 - Suspense Boundaries for client side bails (useSearchParams wrapped in `<Suspense>` inside auth routes to satisfy static compilation during optimized production builds)
@@ -590,6 +588,9 @@ None currently.
 ./app/(patient)/patient/doctors/page.tsx
 ./app/(patient)/patient/onboarding/page.tsx
 ./app/(patient)/patient/onboarding/PatientOnboardingForm.tsx
+./app/(patient)/patient/symptoms/page.tsx
+./app/(patient)/patient/symptoms/SymptomsClient.tsx
+./app/api/recommend/route.ts
 ./app/favicon.ico
 ./app/globals.css
 ./app/layout.tsx
@@ -624,7 +625,7 @@ None currently.
 | DATABASE_URL               | ☑     | ☐      |
 | NEXTAUTH_SECRET            | ☑     | ☐      |
 | NEXTAUTH_URL               | ☑     | ☐      |
-| ANTHROPIC_API_KEY          | ☑     | ☐      |
+| GEMINI_API_KEY             | ☑     | ☐      |
 | DAILY_API_KEY              | ☑     | ☐      |
 | PUSHER_APP_ID              | ☑     | ☐      |
 | PUSHER_SECRET              | ☑     | ☐      |

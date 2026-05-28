@@ -135,14 +135,17 @@ export default function PatientDashboardClient({ user, profile }: PatientDashboa
                 </span>
               </div>
               <h3 className="font-bold text-base mb-1.5 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition">
-                Claude Symptom Triage
+                AI Symptom Triage
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
-                Describe your current symptoms in plain text and get an instant specialist referral using Anthropic Claude.
+                Describe your current symptoms in plain text and get an instant specialist referral using Gemini AI.
               </p>
-              <span className="inline-flex items-center gap-1.5 text-xs text-teal-600 font-semibold cursor-not-allowed opacity-80">
-                Unlock Triage <Clock className="h-3.5 w-3.5" />
-              </span>
+              <Link
+                href="/patient/symptoms"
+                className="inline-flex items-center gap-1.5 text-xs text-teal-600 hover:text-teal-700 font-bold transition cursor-pointer"
+              >
+                Analyze Symptoms <Brain className="h-3.5 w-3.5" />
+              </Link>
             </div>
 
             {/* Doctor Scheduling */}
