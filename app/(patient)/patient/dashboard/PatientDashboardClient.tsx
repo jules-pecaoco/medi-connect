@@ -18,13 +18,11 @@ import {
   ShieldAlert, 
   HeartHandshake,
   Clock,
-  ExternalLink,
   Trash2,
   RefreshCw,
   X,
   AlertCircle,
   Video,
-  Check
 } from "lucide-react";
 
 interface TimeSlot {
@@ -126,7 +124,7 @@ export default function PatientDashboardClient({
     setLoadingSlots(false);
 
     if (result.success && result.data) {
-      setAvailableSlots(result.data as any[]);
+      setAvailableSlots(result.data as TimeSlot[]);
     } else {
       toast({
         title: "Unable to load schedule",
@@ -254,7 +252,7 @@ export default function PatientDashboardClient({
                   <Brain className="h-5 w-5" />
                 </div>
                 <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-teal-500/10 text-teal-600 dark:text-teal-400">
-                  Phase 3 MVP
+                  AI Assisted
                 </span>
               </div>
               <h3 className="font-bold text-base mb-1.5 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition">
@@ -265,7 +263,7 @@ export default function PatientDashboardClient({
               </p>
               <Link
                 href="/patient/symptoms"
-                className="inline-flex items-center gap-1.5 text-xs text-teal-600 hover:text-teal-700 font-bold transition cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white text-xs font-bold transition cursor-pointer shadow-sm shadow-teal-600/15"
               >
                 Analyze Symptoms <Brain className="h-3.5 w-3.5" />
               </Link>
@@ -278,7 +276,7 @@ export default function PatientDashboardClient({
                   <Calendar className="h-5 w-5" />
                 </div>
                 <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                  Phase 2 MVP
+                  Booking
                 </span>
               </div>
               <h3 className="font-bold text-base mb-1.5 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">
@@ -289,7 +287,7 @@ export default function PatientDashboardClient({
               </p>
               <Link
                 href="/patient/doctors"
-                className="inline-flex items-center gap-1.5 text-xs text-emerald-600 hover:text-emerald-700 font-bold transition cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold transition cursor-pointer shadow-sm shadow-emerald-600/15"
               >
                 Find Doctors <Calendar className="h-3.5 w-3.5" />
               </Link>
@@ -412,7 +410,7 @@ export default function PatientDashboardClient({
                         {appt.status === "COMPLETED" && (
                           <Link 
                             href="/patient/records"
-                            className="text-[10px] text-teal-600 hover:underline font-bold transition mr-1 cursor-pointer"
+                            className="inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-bold transition mr-1 cursor-pointer"
                           >
                             View Notes
                           </Link>

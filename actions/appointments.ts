@@ -6,13 +6,17 @@ import { triggerNotification } from "@/lib/pusher";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createDailyRoom } from "@/lib/daily";
-import { combineDateAndTime } from "@/lib/date-utils";
+import { combineScheduleDateAndTime } from "@/lib/date-utils";
 
 const createBookingSchema = z.object({
   slotId: z.string().min(1, "Time slot is required"),
   reason: z.string().min(5, "Reason must be at least 5 characters").max(300, "Reason must be under 300 characters"),
   symptoms: z.string().optional().nullable(),
 });
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
 
 /** Create an appointment with atomic slot locking and Pusher real-time trigger */
 export async function createAppointment(raw: unknown) {
@@ -66,7 +70,7 @@ export async function createAppointment(raw: unknown) {
           patientId: patient.id,
           doctorId: slot.doctorId,
           timeSlotId: slotId,
-          status: "CONFIRMED", // CONFIRMED by default to match Daily.co rules in Phase 5
+          status: "CONFIRMED",
           reason,
           symptoms,
         },
@@ -83,7 +87,7 @@ export async function createAppointment(raw: unknown) {
     // 4. Create Daily.co room and update appointment (outside prisma transaction to prevent block locks)
     let videoRoomUrl: string | null = null;
     try {
-      const slotEnd = combineDateAndTime(appointment.timeSlot.date, appointment.timeSlot.endTime);
+      const slotEnd = combineScheduleDateAndTime(appointment.timeSlot.date, appointment.timeSlot.endTime);
       const expTimestamp = Math.floor((slotEnd.getTime() + 2 * 60 * 60 * 1000) / 1000); // 2 hours buffer
       
       videoRoomUrl = await createDailyRoom(appointment.id, expTimestamp);
@@ -125,9 +129,9 @@ export async function createAppointment(raw: unknown) {
     revalidatePath(`/patient/doctors/${appointment.doctorId}`);
 
     return { success: true as const, data: appointment };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("createAppointment error:", error);
-    return { success: false as const, error: error.message || "Failed to book appointment" };
+    return { success: false as const, error: getErrorMessage(error, "Failed to book appointment") };
   }
 }
 
@@ -198,9 +202,9 @@ export async function cancelAppointment(appointmentId: string) {
     revalidatePath("/doctor/dashboard");
 
     return { success: true as const };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("cancelAppointment error:", error);
-    return { success: false as const, error: error.message || "Failed to cancel appointment" };
+    return { success: false as const, error: getErrorMessage(error, "Failed to cancel appointment") };
   }
 }
 
@@ -291,9 +295,9 @@ export async function rescheduleAppointment(appointmentId: string, newSlotId: st
     revalidatePath("/patient/dashboard");
 
     return { success: true as const, data: result };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("rescheduleAppointment error:", error);
-    return { success: false as const, error: error.message || "Failed to reschedule" };
+    return { success: false as const, error: getErrorMessage(error, "Failed to reschedule") };
   }
 }
 
@@ -412,8 +416,8 @@ export async function completeAppointment(appointmentId: string, notes: string, 
     revalidatePath("/doctor/dashboard");
 
     return { success: true as const, data: updated };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("completeAppointment error:", error);
-    return { success: false as const, error: error.message || "Failed to complete consultation." };
+    return { success: false as const, error: getErrorMessage(error, "Failed to complete consultation.") };
   }
 }

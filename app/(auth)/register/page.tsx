@@ -3,6 +3,7 @@
 import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { registerUser } from "@/actions/auth";
 import { Activity, ShieldAlert, CheckCircle, Loader2 } from "lucide-react";
 
@@ -31,9 +32,21 @@ function RegisterForm() {
       setIsLoading(false);
     } else {
       setSuccess(true);
-      setTimeout(() => {
-        router.push(`/login?role=${role}&registered=true`);
-      }, 1500);
+      const signInResult = await signIn("credentials", {
+        email: email.toLowerCase(),
+        password,
+        role,
+        redirect: false,
+      });
+
+      if (signInResult?.error) {
+        setError("Account created, but automatic sign-in failed. Please sign in manually.");
+        setIsLoading(false);
+        return;
+      }
+
+      router.push("/");
+      router.refresh();
     }
   };
 
@@ -62,7 +75,7 @@ function RegisterForm() {
         {success && (
           <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm flex items-start gap-2">
             <CheckCircle className="h-5 w-5 shrink-0 mt-0.5" />
-            <span>Registration successful! Redirecting to login...</span>
+            <span>Registration successful! Opening your workspace...</span>
           </div>
         )}
 

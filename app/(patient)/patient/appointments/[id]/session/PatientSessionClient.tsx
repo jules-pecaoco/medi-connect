@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { combineScheduleDateAndTime } from "@/lib/date-utils";
 import { 
   ChevronLeft, 
-  Video, 
   Clock, 
   AlertCircle, 
   Calendar,
@@ -33,38 +33,30 @@ export default function PatientSessionClient({ appointment }: PatientSessionClie
 
   // Initialize clock client-side to prevent hydration mismatches
   useEffect(() => {
-    setNow(new Date());
+    const syncClock = () => setNow(new Date());
+    const timeout = window.setTimeout(syncClock, 0);
     const interval = setInterval(() => {
       setNow(new Date());
     }, 1000);
-    return () => clearInterval(interval);
+    return () => {
+      window.clearTimeout(timeout);
+      clearInterval(interval);
+    };
   }, []);
 
-  // Compute UTC start & end boundary times
-  const slotDate = new Date(appointment.timeSlot.date);
-  const [startHours, startMinutes] = appointment.timeSlot.startTime.split(":").map(Number);
-  const [endHours, endMinutes] = appointment.timeSlot.endTime.split(":").map(Number);
-
-  const startUTC = new Date(Date.UTC(
-    slotDate.getUTCFullYear(),
-    slotDate.getUTCMonth(),
-    slotDate.getUTCDate(),
-    startHours,
-    startMinutes
-  ));
-
-  const endUTC = new Date(Date.UTC(
-    slotDate.getUTCFullYear(),
-    slotDate.getUTCMonth(),
-    slotDate.getUTCDate(),
-    endHours,
-    endMinutes
-  ));
+  const slotStart = combineScheduleDateAndTime(
+    appointment.timeSlot.date,
+    appointment.timeSlot.startTime
+  );
+  const slotEnd = combineScheduleDateAndTime(
+    appointment.timeSlot.date,
+    appointment.timeSlot.endTime
+  );
 
   // The 10 minutes early join window start
-  const earlyJoinBoundary = new Date(startUTC.getTime() - 10 * 60 * 1000);
+  const earlyJoinBoundary = new Date(slotStart.getTime() - 10 * 60 * 1000);
   // Session stays joinable up to 1 hour after the slot officially ends
-  const joinCloseBoundary = new Date(endUTC.getTime() + 60 * 60 * 1000);
+  const joinCloseBoundary = new Date(slotEnd.getTime() + 60 * 60 * 1000);
 
   if (!now) {
     return (
@@ -117,7 +109,7 @@ export default function PatientSessionClient({ appointment }: PatientSessionClie
 
         <div className="flex items-center gap-2 text-xs font-semibold px-3.5 py-1.5 rounded-full border border-teal-500/10 bg-teal-500/5 text-teal-600 dark:text-teal-400">
           <Clock className="h-3.5 w-3.5" />
-          {appointment.timeSlot.startTime} - {appointment.timeSlot.endTime} UTC
+          {appointment.timeSlot.startTime} - {appointment.timeSlot.endTime}
         </div>
       </header>
 
@@ -230,7 +222,7 @@ export default function PatientSessionClient({ appointment }: PatientSessionClie
                 Secure HIPAA Encrypted Telehealth call
               </div>
               <div>
-                Slot End time: <span className="font-semibold">{appointment.timeSlot.endTime} UTC</span>
+                Slot End time: <span className="font-semibold">{appointment.timeSlot.endTime}</span>
               </div>
             </div>
           </div>

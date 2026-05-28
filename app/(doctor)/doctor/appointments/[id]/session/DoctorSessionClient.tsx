@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/toast";
 import { completeAppointment } from "@/actions/appointments";
+import { combineScheduleDateAndTime } from "@/lib/date-utils";
 import { 
   ChevronLeft, 
-  Video, 
   Clock, 
   AlertCircle, 
   Calendar,
@@ -19,7 +19,6 @@ import {
   HeartHandshake,
   Activity,
   ClipboardList,
-  Pill,
   X
 } from "lucide-react";
 
@@ -61,6 +60,17 @@ interface DoctorSessionClientProps {
   };
 }
 
+interface PastAppointment {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  doctorName: string;
+  reason: string;
+  notes: string;
+  prescription: string;
+}
+
 export default function DoctorSessionClient({ appointment }: DoctorSessionClientProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -71,40 +81,32 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
   const [prescription, setPrescription] = useState(appointment.prescription);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<"notes" | "chart">("notes");
-  const [selectedPastAppt, setSelectedPastAppt] = useState<any | null>(null);
+  const [selectedPastAppt, setSelectedPastAppt] = useState<PastAppointment | null>(null);
 
   // Sync clock client-side
   useEffect(() => {
-    setNow(new Date());
+    const syncClock = () => setNow(new Date());
+    const timeout = window.setTimeout(syncClock, 0);
     const interval = setInterval(() => {
       setNow(new Date());
     }, 1000);
-    return () => clearInterval(interval);
+    return () => {
+      window.clearTimeout(timeout);
+      clearInterval(interval);
+    };
   }, []);
 
-  // Compute UTC start & end boundary times
-  const slotDate = new Date(appointment.timeSlot.date);
-  const [startHours, startMinutes] = appointment.timeSlot.startTime.split(":").map(Number);
-  const [endHours, endMinutes] = appointment.timeSlot.endTime.split(":").map(Number);
+  const slotStart = combineScheduleDateAndTime(
+    appointment.timeSlot.date,
+    appointment.timeSlot.startTime
+  );
+  const slotEnd = combineScheduleDateAndTime(
+    appointment.timeSlot.date,
+    appointment.timeSlot.endTime
+  );
 
-  const startUTC = new Date(Date.UTC(
-    slotDate.getUTCFullYear(),
-    slotDate.getUTCMonth(),
-    slotDate.getUTCDate(),
-    startHours,
-    startMinutes
-  ));
-
-  const endUTC = new Date(Date.UTC(
-    slotDate.getUTCFullYear(),
-    slotDate.getUTCMonth(),
-    slotDate.getUTCDate(),
-    endHours,
-    endMinutes
-  ));
-
-  const earlyJoinBoundary = new Date(startUTC.getTime() - 10 * 60 * 1000);
-  const joinCloseBoundary = new Date(endUTC.getTime() + 60 * 60 * 1000);
+  const earlyJoinBoundary = new Date(slotStart.getTime() - 10 * 60 * 1000);
+  const joinCloseBoundary = new Date(slotEnd.getTime() + 60 * 60 * 1000);
 
   const handleComplete = async () => {
     if (!notes.trim()) {
@@ -189,7 +191,7 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
 
         <div className="flex items-center gap-2 text-xs font-semibold px-3.5 py-1.5 rounded-full border border-teal-500/10 bg-teal-500/5 text-teal-600 dark:text-teal-400">
           <Clock className="h-3.5 w-3.5" />
-          {appointment.timeSlot.startTime} - {appointment.timeSlot.endTime} UTC
+          {appointment.timeSlot.startTime} - {appointment.timeSlot.endTime}
         </div>
       </header>
 

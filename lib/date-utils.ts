@@ -16,3 +16,18 @@ export function combineDateAndTime(date: Date | string, timeStr: string): Date {
   d.setUTCHours(hours, minutes, 0, 0);
   return d;
 }
+
+export function combineScheduleDateAndTime(date: Date | string, timeStr: string): Date {
+  const [hours, minutes] = timeStr.split(":").map(Number);
+  const d = new Date(date);
+
+  return new Date(
+    d.getUTCFullYear(),
+    d.getUTCMonth(),
+    d.getUTCDate(),
+    hours,
+    minutes,
+    0,
+    0
+  );
+}
