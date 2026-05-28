@@ -55,6 +55,20 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-teal-350: #2dd4bf;
+  --color-teal-450: #14b8a6;
+  --color-teal-550: #0d9488;
+  --color-teal-650: #0f8179;
+  --color-red-650: #dc2626;
+  --color-slate-105: #eef2f7;
+  --color-slate-150: #e2e8f0;
+  --color-slate-250: #cbd5e1;
+  --color-slate-350: #94a3b8;
+  --color-slate-450: #64748b;
+  --color-slate-455: #64748b;
+  --color-slate-650: #334155;
+  --color-slate-750: #1e293b;
+  --color-slate-850: #172033;
   
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
