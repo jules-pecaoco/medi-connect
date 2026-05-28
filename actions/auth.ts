@@ -19,7 +19,7 @@ export async function registerUser(input: RegisterInput) {
   try {
     const parsed = registerSchema.safeParse(input);
     if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0].message };
+      return { success: false, error: parsed.error.issues[0].message };
     }
 
     const { email, password, name, role } = parsed.data;
@@ -63,7 +63,7 @@ export async function upsertPatientProfile(input: PatientProfileInput) {
 
     const parsed = patientProfileSchema.safeParse(input);
     if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0].message };
+      return { success: false, error: parsed.error.issues[0].message };
     }
 
     const data = parsed.data;
@@ -112,7 +112,7 @@ export async function upsertDoctorProfile(input: DoctorProfileInput) {
 
     const parsed = doctorProfileSchema.safeParse(input);
     if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0].message };
+      return { success: false, error: parsed.error.issues[0].message };
     }
 
     const data = parsed.data;

@@ -496,7 +496,7 @@ When conflicts occur:
 
 ## Current Phase
 
-PHASE: 2 — Doctor Discovery & Scheduling
+PHASE: 3 — AI Recommendation
 
 STATUS: Not started
 
@@ -513,10 +513,10 @@ STATUS: Not started
 
 ### Phase 2
 
-- [ ] Doctor listing
-- [ ] Doctor detail
-- [ ] Search/filter
-- [ ] Schedule management
+- [x] Doctor listing
+- [x] Doctor detail
+- [x] Search/filter
+- [x] Schedule management
 
 ### Phase 3
 
@@ -553,6 +553,8 @@ STATUS: Not started
 - Daily.co video consultations
 - Claude-based recommendation engine
 - Downgraded to Prisma 6 to maintain standard env var datasource URL patterns in schema.prisma
+- UTC date standardizations (all date searches/seeding normalize to midnight UTC to maintain absolute consistency across local node, database query parameters, and Vercel edge times)
+- Suspense Boundaries for client side bails (useSearchParams wrapped in `<Suspense>` inside auth routes to satisfy static compilation during optimized production builds)
 
 ---
 
@@ -568,6 +570,7 @@ None currently.
 ./.env
 ./.env.local
 ./actions/auth.ts
+./actions/doctors.ts
 ./actions/schedule.ts
 ./AGENT_CONTEXT.md
 ./AGENTS.md
@@ -577,8 +580,14 @@ None currently.
 ./app/(doctor)/doctor/dashboard/page.tsx
 ./app/(doctor)/doctor/onboarding/DoctorOnboardingForm.tsx
 ./app/(doctor)/doctor/onboarding/page.tsx
+./app/(doctor)/doctor/schedule/DoctorScheduleClient.tsx
+./app/(doctor)/doctor/schedule/page.tsx
 ./app/(patient)/patient/dashboard/page.tsx
 ./app/(patient)/patient/dashboard/PatientDashboardClient.tsx
+./app/(patient)/patient/doctors/[id]/DoctorDetailClient.tsx
+./app/(patient)/patient/doctors/[id]/page.tsx
+./app/(patient)/patient/doctors/DoctorListingClient.tsx
+./app/(patient)/patient/doctors/page.tsx
 ./app/(patient)/patient/onboarding/page.tsx
 ./app/(patient)/patient/onboarding/PatientOnboardingForm.tsx
 ./app/favicon.ico
@@ -588,6 +597,7 @@ None currently.
 ./auth.ts
 ./CLAUDE.md
 ./eslint.config.mjs
+./lib/date-utils.ts
 ./lib/db.ts
 ./middleware.ts
 ./package.json
@@ -643,3 +653,4 @@ At the end of each completed milestone:
 - append important implementation decisions
 
 Only output changed sections unless explicitly asked for the full file.
+

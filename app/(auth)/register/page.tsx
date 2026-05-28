@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { registerUser } from "@/actions/auth";
 import { Activity, ShieldAlert, CheckCircle, Loader2 } from "lucide-react";
 
-export default function Register() {
+function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialRole = searchParams.get("role") === "DOCTOR" ? "DOCTOR" : "PATIENT";
@@ -38,11 +38,7 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#080d16] px-4 py-12 relative overflow-hidden">
-      {/* Glow effect */}
-      <div className="glow-bg top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-30" />
-
-      <div className="w-full max-w-md glass-card rounded-2xl p-8 z-10 animate-fade-in">
+    <div className="w-full max-w-md glass-card rounded-2xl p-8 z-10 animate-fade-in">
         {/* Brand logo */}
         <div className="flex flex-col items-center mb-8">
           <div className="p-3 bg-teal-600 rounded-xl text-white shadow-lg shadow-teal-600/20 mb-3">
@@ -175,6 +171,22 @@ export default function Register() {
           </Link>
         </div>
       </div>
+  );
+}
+
+export default function Register() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#080d16] px-4 py-12 relative overflow-hidden">
+      {/* Glow effect */}
+      <div className="glow-bg top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-30" />
+      <Suspense fallback={
+        <div className="w-full max-w-md glass-card rounded-2xl p-8 z-10 flex flex-col items-center justify-center py-20 text-slate-400">
+          <Loader2 className="h-8 w-8 animate-spin text-teal-600 mb-3" />
+          <span>Loading registration...</span>
+        </div>
+      }>
+        <RegisterForm />
+      </Suspense>
     </div>
   );
 }

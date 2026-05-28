@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { 
   Activity, 
@@ -144,9 +145,12 @@ export default function DoctorDashboardClient({ user, profile }: DoctorDashboard
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
               Configure your weekly consulting days, establish time slots, and define breaks for automatic booking coordination.
             </p>
-            <span className="inline-flex items-center gap-1.5 text-xs text-teal-600 font-semibold cursor-not-allowed opacity-80">
+            <Link
+              href="/doctor/schedule"
+              className="inline-flex items-center gap-1.5 text-xs text-teal-600 hover:text-teal-700 font-bold transition cursor-pointer"
+            >
               Manage Slots <Clock className="h-3.5 w-3.5" />
-            </span>
+            </Link>
           </div>
 
           {/* Upcoming Consultations */}

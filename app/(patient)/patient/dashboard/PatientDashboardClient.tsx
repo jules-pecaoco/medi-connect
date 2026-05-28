@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { 
   Activity, 
@@ -160,9 +161,12 @@ export default function PatientDashboardClient({ user, profile }: PatientDashboa
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
                 Search specialists by department, read ratings and consulting bio details, and book consultation sessions.
               </p>
-              <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600 font-semibold cursor-not-allowed opacity-80">
-                Unlock Booking <Clock className="h-3.5 w-3.5" />
-              </span>
+              <Link
+                href="/patient/doctors"
+                className="inline-flex items-center gap-1.5 text-xs text-emerald-600 hover:text-emerald-700 font-bold transition cursor-pointer"
+              >
+                Find Doctors <Calendar className="h-3.5 w-3.5" />
+              </Link>
             </div>
 
           </div>

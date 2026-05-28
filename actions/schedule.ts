@@ -108,7 +108,7 @@ export async function createScheduleBlock(raw: unknown) {
 
   const parsed = scheduleSchema.safeParse(raw);
   if (!parsed.success) {
-    return { success: false as const, error: parsed.error.errors[0].message };
+    return { success: false as const, error: parsed.error.issues[0].message };
   }
 
   const { dayOfWeek, startTime, endTime, slotDurationMinutes } = parsed.data;
