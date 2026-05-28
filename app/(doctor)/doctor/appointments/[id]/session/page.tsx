@@ -66,6 +66,38 @@ export default async function DoctorSessionPage({ params }: PageProps) {
   const diffMs = Date.now() - dob.getTime();
   const age = Math.floor(diffMs / (1000 * 60 * 60 * 24 * 365.25));
 
+  // Retrieve patient clinical consultation history
+  const pastAppts = await db.appointment.findMany({
+    where: {
+      patientId: appt.patientId,
+      status: "COMPLETED",
+      id: { not: appt.id }
+    },
+    include: {
+      timeSlot: true,
+      doctor: {
+        include: {
+          user: { select: { name: true } }
+        }
+      }
+    },
+    orderBy: [
+      { timeSlot: { date: "desc" } },
+      { timeSlot: { startTime: "desc" } }
+    ]
+  });
+
+  const serializedPastAppts = pastAppts.map(pa => ({
+    id: pa.id,
+    date: pa.timeSlot.date.toISOString(),
+    startTime: pa.timeSlot.startTime,
+    endTime: pa.timeSlot.endTime,
+    doctorName: pa.doctor.user.name || "Anonymous Doctor",
+    reason: pa.reason || "General Consultation",
+    notes: pa.notes || "No notes logged",
+    prescription: pa.prescription || ""
+  }));
+
   // Normalize appointment object for clean client serialization
   const serializedAppt = {
     id: appt.id,
@@ -90,8 +122,9 @@ export default async function DoctorSessionPage({ params }: PageProps) {
       medicalHistory: appt.patient.medicalHistory || "None declared",
       emergencyContactName: appt.patient.emergencyContactName,
       emergencyContactPhone: appt.patient.emergencyContactPhone,
+      pastAppointments: serializedPastAppts,
     },
   };
 
-  return <DoctorSessionClient appointment={serializedAppt} />;
+  return <DoctorSessionClient appointment={serializedAppt as any} />;
 }

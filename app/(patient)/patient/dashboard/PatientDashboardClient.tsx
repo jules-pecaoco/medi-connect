@@ -408,13 +408,23 @@ export default function PatientDashboardClient({
                         <p className="font-semibold">Dr. {appt.doctor.user.name}</p>
                         <p className="text-slate-450 text-[10px]">{dateStr} &bull; {appt.timeSlot.startTime}</p>
                       </div>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                        appt.status === "COMPLETED"
-                          ? "bg-emerald-500/10 text-emerald-600"
-                          : "bg-rose-500/10 text-rose-500"
-                      }`}>
-                        {appt.status}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {appt.status === "COMPLETED" && (
+                          <Link 
+                            href="/patient/records"
+                            className="text-[10px] text-teal-600 hover:underline font-bold transition mr-1 cursor-pointer"
+                          >
+                            View Notes
+                          </Link>
+                        )}
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                          appt.status === "COMPLETED"
+                            ? "bg-emerald-500/10 text-emerald-600"
+                            : "bg-rose-500/10 text-rose-500"
+                        }`}>
+                          {appt.status}
+                        </span>
+                      </div>
                     </div>
                   );
                 })}
@@ -422,7 +432,7 @@ export default function PatientDashboardClient({
             </div>
           )}
 
-          {/* Medical Records History placeholder */}
+          {/* Medical Records History Section */}
           <div className="glass-card rounded-2xl p-6 border border-slate-200/60 dark:border-slate-800/80 shadow-md">
             <div className="flex items-center gap-3 mb-5">
               <div className="p-2.5 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl">
@@ -431,15 +441,29 @@ export default function PatientDashboardClient({
               <h2 className="font-bold text-base">Medical Records</h2>
             </div>
             
-            <div className="p-4 rounded-xl bg-slate-100 dark:bg-slate-900/60 text-xs text-slate-500 dark:text-slate-400 flex items-start gap-3">
+            <div className="p-4 rounded-xl bg-slate-100 dark:bg-slate-900/60 text-xs text-slate-500 dark:text-slate-400 flex items-start gap-3 mb-4">
               <ShieldAlert className="h-5 w-5 text-teal-600 shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold text-slate-700 dark:text-slate-300">Consultation Notes & Prescriptions</p>
                 <p className="mt-1">
-                  Once consultations are completed (Phase 5/6), your prescriptions, clinical notes, and summary history will automatically compile and lock here for your retrieval.
+                  Your prescription slips, clinical diagnostic notes, and visit summaries are saved securely to your file.
                 </p>
               </div>
             </div>
+
+            <div className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-850 rounded-xl mb-4 text-xs">
+              <span className="text-slate-450 font-medium">Completed Consultations</span>
+              <span className="font-extrabold text-teal-650 dark:text-teal-400">
+                {appointments.filter(a => a.status === "COMPLETED").length}
+              </span>
+            </div>
+
+            <Link
+              href="/patient/records"
+              className="w-full py-3 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-bold text-xs rounded-xl shadow-md shadow-teal-650/15 transition flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <FileText className="h-4 w-4" /> View Medical History
+            </Link>
           </div>
 
         </div>

@@ -395,13 +395,13 @@ Only proceed after current phase is manually verified working.
 - [x] Doctor discovery
 - [x] Search/filter
 - [x] AI recommendations
-- [ ] Appointment booking
-- [ ] Reschedule/cancel
-- [ ] Real-time notifications
+- [x] Appointment booking
+- [x] Reschedule/cancel
+- [x] Real-time notifications
 - [x] Video consultation
-- [ ] Consultation notes
-- [ ] Prescription records
-- [ ] Patient medical records
+- [x] Consultation notes
+- [x] Prescription records
+- [x] Patient medical records
 - [ ] Public deployment
 - [ ] Public Git repository
 - [ ] Clear README
@@ -496,7 +496,7 @@ When conflicts occur:
 
 PHASE: 6 — Medical Records
 
-STATUS: Not started
+STATUS: Completed
 
 ---
 
@@ -536,8 +536,8 @@ STATUS: Not started
 
 ### Phase 6
 
-- [ ] Consultation notes
-- [ ] Patient records
+- [x] Consultation notes
+- [x] Patient records
 
 ---
 
@@ -556,6 +556,7 @@ STATUS: Not started
 - Atomic transaction-level booking locks to prevent double-booking.
 - Global toast provider-based message dispatcher mounted at layout level.
 - Multi-client subscription model for patient-{id} and doctor-{id} real-time Pusher listener channels.
+- Global light-mode enforcement by disabling Tailwind's media-query dark mode via `@custom-variant dark (&:not(*))`.
 
 ---
 
@@ -570,6 +571,7 @@ None currently.
 ```
 ./.env
 ./.env.local
+./actions/appointments.ts
 ./actions/auth.ts
 ./actions/doctors.ts
 ./actions/schedule.ts
@@ -591,6 +593,8 @@ None currently.
 ./app/(patient)/patient/doctors/page.tsx
 ./app/(patient)/patient/onboarding/page.tsx
 ./app/(patient)/patient/onboarding/PatientOnboardingForm.tsx
+./app/(patient)/patient/records/page.tsx
+./app/(patient)/patient/records/PatientRecordsClient.tsx
 ./app/(patient)/patient/symptoms/page.tsx
 ./app/(patient)/patient/symptoms/SymptomsClient.tsx
 ./app/api/recommend/route.ts

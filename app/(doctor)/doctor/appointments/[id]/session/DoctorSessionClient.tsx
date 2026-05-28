@@ -18,7 +18,9 @@ import {
   User,
   HeartHandshake,
   Activity,
-  ClipboardList
+  ClipboardList,
+  Pill,
+  X
 } from "lucide-react";
 
 interface DoctorSessionClientProps {
@@ -45,6 +47,16 @@ interface DoctorSessionClientProps {
       medicalHistory: string;
       emergencyContactName: string;
       emergencyContactPhone: string;
+      pastAppointments?: {
+        id: string;
+        date: string;
+        startTime: string;
+        endTime: string;
+        doctorName: string;
+        reason: string;
+        notes: string;
+        prescription: string;
+      }[];
     };
   };
 }
@@ -59,6 +71,7 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
   const [prescription, setPrescription] = useState(appointment.prescription);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<"notes" | "chart">("notes");
+  const [selectedPastAppt, setSelectedPastAppt] = useState<any | null>(null);
 
   // Sync clock client-side
   useEffect(() => {
@@ -384,10 +397,44 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
 
                     {/* Patient Medical History Card */}
                     <div className="space-y-1.5">
-                      <span className="block text-xs font-extrabold uppercase tracking-wider text-slate-450">Clinical History Chart</span>
-                      <div className="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-xl text-xs leading-relaxed text-slate-600 dark:text-slate-300 max-h-48 overflow-y-auto whitespace-pre-wrap">
+                      <span className="block text-xs font-extrabold uppercase tracking-wider text-slate-455">Onboarding Medical History</span>
+                      <div className="p-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-xl text-xs leading-relaxed text-slate-600 dark:text-slate-300 max-h-36 overflow-y-auto whitespace-pre-wrap">
                         {appointment.patient.medicalHistory}
                       </div>
+                    </div>
+
+                    {/* Past Consultation Timeline inside Session Chart */}
+                    <div className="space-y-2">
+                      <span className="block text-xs font-extrabold uppercase tracking-wider text-slate-455">Previous Consultations ({appointment.patient.pastAppointments?.length || 0})</span>
+                      {(!appointment.patient.pastAppointments || appointment.patient.pastAppointments.length === 0) ? (
+                        <div className="p-3 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-[10px] text-slate-400">
+                          No previous completed consults on file.
+                        </div>
+                      ) : (
+                        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                          {appointment.patient.pastAppointments.map((appt) => {
+                            const dateStr = new Date(appt.date).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                              timeZone: "UTC"
+                            });
+                            return (
+                              <div 
+                                key={appt.id}
+                                onClick={() => setSelectedPastAppt(appt)}
+                                className="p-2.5 rounded-xl border border-slate-100 dark:border-slate-850 bg-slate-50 dark:bg-slate-950/40 hover:border-teal-500/20 hover:bg-white dark:hover:bg-slate-900 cursor-pointer transition text-[11px]"
+                              >
+                                <div className="flex justify-between items-center font-bold text-slate-700 dark:text-slate-300">
+                                  <span>Dr. {appt.doctorName}</span>
+                                  <span className="text-[9px] text-slate-400 font-medium">{dateStr}</span>
+                                </div>
+                                <p className="text-[10px] text-slate-450 truncate mt-0.5">Complaint: {appt.reason}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
 
                     {/* Patient Emergency Contacts */}
@@ -427,6 +474,71 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
           </div>
         )}
       </main>
+
+      {/* Historical Record Detail Modal */}
+      {selectedPastAppt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-xl p-6 shadow-2xl relative max-h-[85vh] flex flex-col overflow-hidden animate-scale-in">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-slate-200 dark:border-slate-800 pb-3 shrink-0">
+              <div>
+                <h3 className="font-extrabold text-sm text-slate-800 dark:text-slate-100">
+                  Historical Consultation Details
+                </h3>
+                <p className="text-[10px] text-slate-400 mt-0.5">
+                  Dr. {selectedPastAppt.doctorName} &bull; {new Date(selectedPastAppt.date).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" })}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedPastAppt(null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Scrollable Contents */}
+            <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1 scrollbar-thin text-xs">
+              <div>
+                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Chief Complaint / Reason</span>
+                <div className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-xl">
+                  {selectedPastAppt.reason}
+                </div>
+              </div>
+
+              <div>
+                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Clinical Notes & Diagnosis</span>
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-150 dark:border-slate-850 rounded-xl leading-relaxed whitespace-pre-wrap text-slate-650 dark:text-slate-300">
+                  {selectedPastAppt.notes}
+                </div>
+              </div>
+
+              <div>
+                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Prescribed Rx</span>
+                {selectedPastAppt.prescription ? (
+                  <div className="p-3.5 bg-teal-500/[0.02] border border-dashed border-teal-500/20 rounded-xl font-mono leading-relaxed whitespace-pre-wrap text-slate-700 dark:text-slate-300">
+                    {selectedPastAppt.prescription}
+                  </div>
+                ) : (
+                  <div className="p-3 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 text-center text-[10px]">
+                    No prescription logged for this encounter.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="border-t border-slate-200 dark:border-slate-800 pt-3 flex shrink-0">
+              <button
+                onClick={() => setSelectedPastAppt(null)}
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-650 dark:text-slate-300 font-bold text-xs rounded-xl transition cursor-pointer"
+              >
+                Close History
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

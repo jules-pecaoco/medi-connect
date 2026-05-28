@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Enforce light mode color palette globally by disabling media-query dark mode */
+@custom-variant dark (&:not(*));
+
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
@@ -30,36 +33,6 @@
   --ring: #14b8a6;
   
   --radius: 0.75rem;
-}
-
-.dark {
-  --background: #090d16;
-  --foreground: #f8fafc;
-  
-  --card: #111827;
-  --card-foreground: #f8fafc;
-  
-  --popover: #111827;
-  --popover-foreground: #f8fafc;
-  
-  --primary: #14b8a6;
-  --primary-foreground: #090d16;
-  
-  --secondary: #0d9488;
-  --secondary-foreground: #f8fafc;
-  
-  --muted: #1f2937;
-  --muted-foreground: #9ca3af;
-  
-  --accent: #1f2937;
-  --accent-foreground: #f8fafc;
-  
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-  
-  --border: #1f2937;
-  --input: #1f2937;
-  --ring: #0d9488;
 }
 
 @theme inline {
@@ -109,24 +82,11 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
-.dark .glass-panel {
-  background: rgba(17, 24, 39, 0.75);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
 .glass-card {
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.35);
   box-shadow: 0 8px 32px 0 rgba(13, 148, 136, 0.04);
-}
-
-.dark .glass-card {
-  background: rgba(17, 24, 39, 0.7);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 }
 
 /* Custom interactive ring */

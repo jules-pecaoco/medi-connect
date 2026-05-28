@@ -19,7 +19,10 @@ import {
   Video,
   FileCheck,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  ClipboardList,
+  Pill,
+  X
 } from "lucide-react";
 
 interface TimeSlot {
@@ -44,6 +47,8 @@ interface Appointment {
   reason: string | null;
   symptoms: string | null;
   videoRoomUrl?: string | null;
+  notes?: string | null;
+  prescription?: string | null;
 }
 
 interface DoctorDashboardClientProps {
@@ -71,6 +76,7 @@ export default function DoctorDashboardClient({
   const router = useRouter();
   const { toast } = useToast();
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);
 
   const handleCancel = async (id: string) => {
     if (!confirm("Are you sure you want to cancel this consultation? This will notify the patient and release the slot.")) return;
@@ -327,13 +333,23 @@ export default function DoctorDashboardClient({
                         <p className="font-semibold">{appt.patient.user.name}</p>
                         <p className="text-slate-450 text-[10px]">{dateStr} &bull; {appt.timeSlot.startTime}</p>
                       </div>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                        appt.status === "COMPLETED"
-                          ? "bg-emerald-500/10 text-emerald-600"
-                          : "bg-rose-500/10 text-rose-500"
-                      }`}>
-                        {appt.status}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {appt.status === "COMPLETED" && (
+                          <button 
+                            onClick={() => setSelectedAppt(appt)}
+                            className="text-[10px] text-teal-650 hover:underline font-bold transition mr-1 cursor-pointer"
+                          >
+                            Review Notes
+                          </button>
+                        )}
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                          appt.status === "COMPLETED"
+                            ? "bg-emerald-500/10 text-emerald-600"
+                            : "bg-rose-500/10 text-rose-500"
+                        }`}>
+                          {appt.status}
+                        </span>
+                      </div>
                     </div>
                   );
                 })}
@@ -364,6 +380,80 @@ export default function DoctorDashboardClient({
         </div>
 
       </div>
+
+      {/* Review Completed Consultation Modal */}
+      {selectedAppt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-xl p-6 shadow-2xl relative max-h-[85vh] flex flex-col overflow-hidden animate-scale-in">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-slate-200 dark:border-slate-800 pb-3 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-teal-500/10 text-teal-650 dark:text-teal-400 rounded-lg">
+                  <ClipboardList className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-800 dark:text-slate-100">
+                    Consultation Record Review
+                  </h3>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    Patient: {selectedAppt.patient.user.name} &bull; {new Date(selectedAppt.timeSlot.date).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" })}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedAppt(null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Scrollable Contents */}
+            <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1 scrollbar-thin text-xs">
+              <div className="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-950/30 p-3.5 rounded-xl border border-slate-100 dark:border-slate-850">
+                <div>
+                  <span className="block text-[9px] uppercase font-bold text-slate-400">Chief Complaint</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-350 block mt-0.5">{selectedAppt.reason}</span>
+                </div>
+                <div>
+                  <span className="block text-[9px] uppercase font-bold text-slate-400">Patient Symptoms</span>
+                  <span className="italic text-slate-700 dark:text-slate-350 block mt-0.5">{selectedAppt.symptoms || "None declared"}</span>
+                </div>
+              </div>
+
+              <div>
+                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Your Diagnostic Notes</span>
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-150 dark:border-slate-850 rounded-xl leading-relaxed whitespace-pre-wrap text-slate-650 dark:text-slate-300">
+                  {selectedAppt.notes || "No clinical diagnostic notes logged for this session."}
+                </div>
+              </div>
+
+              <div>
+                <span className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Prescribed Rx</span>
+                {selectedAppt.prescription ? (
+                  <div className="p-3.5 bg-teal-500/[0.02] border border-dashed border-teal-500/20 rounded-xl font-mono leading-relaxed whitespace-pre-wrap text-slate-700 dark:text-slate-300">
+                    {selectedAppt.prescription}
+                  </div>
+                ) : (
+                  <div className="p-3 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 text-center text-[10px]">
+                    No prescription issued for this encounter.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="border-t border-slate-200 dark:border-slate-800 pt-3 flex shrink-0">
+              <button
+                onClick={() => setSelectedAppt(null)}
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-650 dark:text-slate-300 font-bold text-xs rounded-xl transition cursor-pointer"
+              >
+                Close Record
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
