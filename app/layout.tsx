@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
+import { auth } from "@/auth";
+import { ToastProvider } from "@/components/ui/toast";
+import NotificationListener from "@/components/shared/NotificationListener";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -14,17 +17,27 @@ export const metadata: Metadata = {
   keywords: ["telehealth", "doctor booking", "video consultation", "AI healthcare triage"],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
+
   return (
     <html lang="en" className={`${outfit.variable} h-full scroll-smooth`}>
       <body className="min-h-full flex flex-col antialiased">
-        <main className="flex-1 flex flex-col relative">
-          {children}
-        </main>
+        <ToastProvider>
+          {session?.user?.id && (
+            <NotificationListener 
+              userId={session.user.id} 
+              role={session.user.role as "PATIENT" | "DOCTOR"} 
+            />
+          )}
+          <main className="flex-1 flex flex-col relative">
+            {children}
+          </main>
+        </ToastProvider>
       </body>
     </html>
   );

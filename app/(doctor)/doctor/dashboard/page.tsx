@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import db from "@/lib/db";
+import { getDoctorAppointments } from "@/actions/appointments";
 import DoctorDashboardClient from "./DoctorDashboardClient";
 
 export default async function DoctorDashboard() {
@@ -22,6 +23,9 @@ export default async function DoctorDashboard() {
     redirect("/doctor/onboarding");
   }
 
+  const apptsRes = await getDoctorAppointments();
+  const appointments = apptsRes.success ? apptsRes.data : [];
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#080d16] text-slate-900 dark:text-slate-100 relative overflow-hidden">
       {/* Glow blobs */}
@@ -29,7 +33,7 @@ export default async function DoctorDashboard() {
       <div className="glow-bg bottom-[-200px] right-[-200px] opacity-10" />
 
       <div className="z-10 relative">
-        <DoctorDashboardClient user={session.user} profile={profile} />
+        <DoctorDashboardClient user={session.user} profile={profile} appointments={appointments as any} />
       </div>
     </div>
   );

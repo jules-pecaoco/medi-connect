@@ -392,9 +392,9 @@ Only proceed after current phase is manually verified working.
 - [x] Patient registration/login
 - [x] Doctor registration/login
 - [x] Profile onboarding
-- [ ] Doctor discovery
-- [ ] Search/filter
-- [ ] AI recommendations
+- [x] Doctor discovery
+- [x] Search/filter
+- [x] AI recommendations
 - [ ] Appointment booking
 - [ ] Reschedule/cancel
 - [ ] Real-time notifications
@@ -494,7 +494,7 @@ When conflicts occur:
 
 ## Current Phase
 
-PHASE: 4 — Appointment Booking
+PHASE: 5 — Consultation Session
 
 STATUS: Not started
 
@@ -524,9 +524,9 @@ STATUS: Not started
 
 ### Phase 4
 
-- [ ] Appointment booking
-- [ ] Cancel/reschedule
-- [ ] Notifications
+- [x] Appointment booking
+- [x] Cancel/reschedule
+- [x] Notifications
 
 ### Phase 5
 
@@ -553,6 +553,9 @@ STATUS: Not started
 - Downgraded to Prisma 6 to maintain standard env var datasource URL patterns in schema.prisma
 - UTC date standardizations (all date searches/seeding normalize to midnight UTC to maintain absolute consistency across local node, database query parameters, and Vercel edge times)
 - Suspense Boundaries for client side bails (useSearchParams wrapped in `<Suspense>` inside auth routes to satisfy static compilation during optimized production builds)
+- Atomic transaction-level booking locks to prevent double-booking.
+- Global toast provider-based message dispatcher mounted at layout level.
+- Multi-client subscription model for patient-{id} and doctor-{id} real-time Pusher listener channels.
 
 ---
 
@@ -654,4 +657,3 @@ At the end of each completed milestone:
 - append important implementation decisions
 
 Only output changed sections unless explicitly asked for the full file.
-

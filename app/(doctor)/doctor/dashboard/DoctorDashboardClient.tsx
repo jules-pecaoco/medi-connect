@@ -1,8 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/toast";
+import { cancelAppointment } from "@/actions/appointments";
 import { 
   Activity, 
   LogOut, 
@@ -14,8 +17,33 @@ import {
   Star, 
   Award,
   Video,
-  FileCheck
+  FileCheck,
+  Trash2,
+  AlertCircle
 } from "lucide-react";
+
+interface TimeSlot {
+  id: string;
+  date: Date;
+  startTime: string;
+  endTime: string;
+  status: string;
+}
+
+interface Appointment {
+  id: string;
+  patientId: string;
+  patient: {
+    user: {
+      name: string | null;
+      email: string | null;
+    };
+  };
+  timeSlot: TimeSlot;
+  status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
+  reason: string | null;
+  symptoms: string | null;
+}
 
 interface DoctorDashboardClientProps {
   user: {
@@ -31,9 +59,44 @@ interface DoctorDashboardClientProps {
     rating: number;
     availabilityStatus: boolean;
   };
+  appointments?: Appointment[];
 }
 
-export default function DoctorDashboardClient({ user, profile }: DoctorDashboardClientProps) {
+export default function DoctorDashboardClient({ 
+  user, 
+  profile, 
+  appointments = [] 
+}: DoctorDashboardClientProps) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  const handleCancel = async (id: string) => {
+    if (!confirm("Are you sure you want to cancel this consultation? This will notify the patient and release the slot.")) return;
+
+    setCancellingId(id);
+    const result = await cancelAppointment(id);
+    setCancellingId(null);
+
+    if (result.success) {
+      toast({
+        title: "Consultation Cancelled",
+        description: "The patient has been notified and the slot is open.",
+        type: "success",
+      });
+      router.refresh();
+    } else {
+      toast({
+        title: "Cancellation Failed",
+        description: result.error || "An error occurred.",
+        type: "error",
+      });
+    }
+  };
+
+  const activeAppointments = appointments.filter(a => a.status === "CONFIRMED" || a.status === "PENDING");
+  const pastAppointments = appointments.filter(a => a.status === "COMPLETED" || a.status === "CANCELLED");
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Top Header */}
@@ -96,7 +159,7 @@ export default function DoctorDashboardClient({ user, profile }: DoctorDashboard
             <Clock className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Availability</p>
+            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Availability Status</p>
             <p className="text-xl font-bold mt-0.5 flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               Active
@@ -153,7 +216,7 @@ export default function DoctorDashboardClient({ user, profile }: DoctorDashboard
             </Link>
           </div>
 
-          {/* Upcoming Consultations */}
+          {/* Upcoming Consultations Queue */}
           <div className="glass-card rounded-2xl p-6 border border-slate-200/60 dark:border-slate-800/80 shadow-md">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
@@ -162,20 +225,110 @@ export default function DoctorDashboardClient({ user, profile }: DoctorDashboard
                 </div>
                 <h2 className="font-bold text-base">Upcoming Consultation Queue</h2>
               </div>
-              <span className="text-xs text-slate-400 font-medium">0 active calls</span>
+              <span className="text-xs text-slate-400 font-medium">
+                {activeAppointments.length} patient{activeAppointments.length !== 1 && "s"} queued
+              </span>
             </div>
 
-            {/* Empty state queue */}
-            <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800/80 rounded-xl p-6">
-              <div className="p-4 bg-slate-100 dark:bg-slate-900 rounded-full mb-3 text-slate-400">
-                <Video className="h-6 w-6" />
+            {activeAppointments.length === 0 ? (
+              /* Empty state */
+              <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800/80 rounded-xl p-6">
+                <div className="p-4 bg-slate-100 dark:bg-slate-900 rounded-full mb-3 text-slate-400">
+                  <Video className="h-6 w-6" />
+                </div>
+                <h4 className="font-semibold text-sm">No Pending Sessions</h4>
+                <p className="text-xs text-slate-400 max-w-sm mt-1">
+                  You do not have any patient consultations booked for today. Bookings will automatically populate here.
+                </p>
               </div>
-              <h4 className="font-semibold text-sm">No Pending Sessions</h4>
-              <p className="text-xs text-slate-400 max-w-sm mt-1">
-                You do not have any patient consultations booked for today. Any bookings will populate here with direct HD video room shortcuts.
-              </p>
-            </div>
+            ) : (
+              <div className="space-y-4">
+                {activeAppointments.map((appt) => {
+                  const dateStr = new Date(appt.timeSlot.date).toLocaleDateString("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    timeZone: "UTC",
+                  });
+                  return (
+                    <div 
+                      key={appt.id} 
+                      className="p-4 rounded-xl border border-slate-105 bg-white dark:bg-slate-900/40 hover:border-teal-500/20 transition duration-300 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-sm text-slate-800 dark:text-slate-200">
+                            {appt.patient.user.name || "Anonymous Patient"}
+                          </h4>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400 px-2 py-0.5 bg-teal-550/10 rounded">
+                            CONFIRMED
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5" /> {dateStr}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5" /> {appt.timeSlot.startTime} - {appt.timeSlot.endTime}
+                          </span>
+                        </div>
+                        {appt.reason && (
+                          <p className="text-xs text-slate-650 dark:text-slate-300 mt-1">
+                            Reason: <span className="font-semibold">{appt.reason}</span>
+                          </p>
+                        )}
+                        {appt.symptoms && (
+                          <p className="text-xs text-slate-400">
+                            Symptoms: <span className="italic">{appt.symptoms}</span>
+                          </p>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => handleCancel(appt.id)}
+                        disabled={cancellingId === appt.id}
+                        className="self-end md:self-center inline-flex items-center justify-center gap-1.5 p-2 px-3 border border-slate-200 dark:border-slate-800 hover:border-red-500/20 text-xs font-semibold rounded-lg hover:text-red-500 hover:bg-red-500/[0.02] transition cursor-pointer disabled:opacity-50"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Cancel Consultation
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
+
+          {/* Past & Cancelled Consultation Log */}
+          {pastAppointments.length > 0 && (
+            <div className="glass-card rounded-2xl p-6 border border-slate-200/60 dark:border-slate-800/80 shadow-md">
+              <h3 className="font-bold text-sm text-slate-400 uppercase tracking-wider mb-4">Past & Cancelled Log</h3>
+              <div className="space-y-3">
+                {pastAppointments.map((appt) => {
+                  const dateStr = new Date(appt.timeSlot.date).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    timeZone: "UTC",
+                  });
+                  return (
+                    <div key={appt.id} className="flex justify-between items-center text-xs p-3 rounded-lg bg-slate-50 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800/40">
+                      <div>
+                        <p className="font-semibold">{appt.patient.user.name}</p>
+                        <p className="text-slate-450 text-[10px]">{dateStr} &bull; {appt.timeSlot.startTime}</p>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        appt.status === "COMPLETED"
+                          ? "bg-emerald-500/10 text-emerald-600"
+                          : "bg-rose-500/10 text-rose-500"
+                      }`}>
+                        {appt.status}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Clinical Prescriptions helper card */}
           <div className="glass-card rounded-2xl p-6 border border-slate-200/60 dark:border-slate-800/80 shadow-md">

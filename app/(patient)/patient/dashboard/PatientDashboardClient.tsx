@@ -1,8 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/toast";
+import { cancelAppointment, rescheduleAppointment } from "@/actions/appointments";
+import { getDoctorAvailableSlots } from "@/actions/schedule";
 import { 
   Activity, 
   LogOut, 
@@ -14,11 +18,42 @@ import {
   ShieldAlert, 
   HeartHandshake,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Trash2,
+  RefreshCw,
+  X,
+  AlertCircle,
+  Video,
+  Check
 } from "lucide-react";
+
+interface TimeSlot {
+  id: string;
+  date: Date;
+  startTime: string;
+  endTime: string;
+  status: string;
+}
+
+interface Appointment {
+  id: string;
+  doctorId: string;
+  doctor: {
+    specialization: string;
+    user: {
+      name: string | null;
+      email: string | null;
+    };
+  };
+  timeSlot: TimeSlot;
+  status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
+  reason: string | null;
+  symptoms: string | null;
+}
 
 interface PatientDashboardClientProps {
   user: {
+    id?: string | null;
     name?: string | null;
     email?: string | null;
   };
@@ -31,14 +66,101 @@ interface PatientDashboardClientProps {
     emergencyContactPhone: string;
     medicalHistory: string | null;
   };
+  appointments?: Appointment[];
 }
 
-export default function PatientDashboardClient({ user, profile }: PatientDashboardClientProps) {
+export default function PatientDashboardClient({ 
+  user, 
+  profile, 
+  appointments = [] 
+}: PatientDashboardClientProps) {
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  
+  // Reschedule states
+  const [reschedulingAppt, setReschedulingAppt] = useState<Appointment | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [selectedNewSlotId, setSelectedNewSlotId] = useState<string | null>(null);
+  const [isReschedulingSubmit, setIsReschedulingSubmit] = useState(false);
+
   const formattedDOB = new Date(profile.dateOfBirth).toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
     year: "numeric",
   });
+
+  const handleCancel = async (id: string) => {
+    if (!confirm("Are you sure you want to cancel this appointment?")) return;
+
+    setCancellingId(id);
+    const result = await cancelAppointment(id);
+    setCancellingId(null);
+
+    if (result.success) {
+      toast({
+        title: "Appointment Cancelled",
+        description: "Your consultation has been cancelled, and the slot is now open.",
+        type: "success",
+      });
+      router.refresh();
+    } else {
+      toast({
+        title: "Cancellation Failed",
+        description: result.error || "An error occurred.",
+        type: "error",
+      });
+    }
+  };
+
+  const handleOpenReschedule = async (appt: Appointment) => {
+    setReschedulingAppt(appt);
+    setLoadingSlots(true);
+    setSelectedNewSlotId(null);
+    setAvailableSlots([]);
+
+    const result = await getDoctorAvailableSlots(appt.doctorId);
+    setLoadingSlots(false);
+
+    if (result.success && result.data) {
+      setAvailableSlots(result.data as any[]);
+    } else {
+      toast({
+        title: "Unable to load schedule",
+        description: "Failed to load doctor's available slots.",
+        type: "error",
+      });
+    }
+  };
+
+  const handleConfirmReschedule = async () => {
+    if (!reschedulingAppt || !selectedNewSlotId) return;
+
+    setIsReschedulingSubmit(true);
+    const result = await rescheduleAppointment(reschedulingAppt.id, selectedNewSlotId);
+    setIsReschedulingSubmit(false);
+
+    if (result.success) {
+      toast({
+        title: "Appointment Rescheduled",
+        description: `Successfully moved consultation with Dr. ${reschedulingAppt.doctor.user.name}.`,
+        type: "success",
+      });
+      setReschedulingAppt(null);
+      router.refresh();
+    } else {
+      toast({
+        title: "Reschedule Failed",
+        description: result.error || "Failed to reschedule consultation.",
+        type: "error",
+      });
+    }
+  };
+
+  const activeAppointments = appointments.filter(a => a.status === "CONFIRMED" || a.status === "PENDING");
+  const pastAppointments = appointments.filter(a => a.status === "COMPLETED" || a.status === "CANCELLED");
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -124,7 +246,7 @@ export default function PatientDashboardClient({ user, profile }: PatientDashboa
           {/* Quick Actions / Services Cards */}
           <div className="grid sm:grid-cols-2 gap-6">
             
-            {/* Claude AI Triage Matching */}
+            {/* AI Triage Matching */}
             <div className="group p-6 rounded-2xl border border-teal-500/10 bg-white dark:bg-slate-900/50 hover:border-teal-500/40 hover:shadow-xl hover:shadow-teal-500/5 transition duration-300">
               <div className="flex items-center justify-between mb-4">
                 <div className="p-3 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl group-hover:scale-110 transition duration-300">
@@ -138,7 +260,7 @@ export default function PatientDashboardClient({ user, profile }: PatientDashboa
                 AI Symptom Triage
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
-                Describe your current symptoms in plain text and get an instant specialist referral using Gemini AI.
+                Describe your symptoms in plain text and discover matching clinical specializations instantly with AI.
               </p>
               <Link
                 href="/patient/symptoms"
@@ -162,7 +284,7 @@ export default function PatientDashboardClient({ user, profile }: PatientDashboa
                 Find & Schedule Doctor
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
-                Search specialists by department, read ratings and consulting bio details, and book consultation sessions.
+                Search specialists by department, read ratings and bios, and book consultation sessions.
               </p>
               <Link
                 href="/patient/doctors"
@@ -174,7 +296,7 @@ export default function PatientDashboardClient({ user, profile }: PatientDashboa
 
           </div>
 
-          {/* Appointments & consultation History */}
+          {/* Appointments & Consultation Queue */}
           <div className="glass-card rounded-2xl p-6 border border-slate-200/60 dark:border-slate-800/80 shadow-md">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
@@ -183,20 +305,113 @@ export default function PatientDashboardClient({ user, profile }: PatientDashboa
                 </div>
                 <h2 className="font-bold text-base">Your Consultations</h2>
               </div>
-              <span className="text-xs text-slate-400 font-medium">0 active appointments</span>
+              <span className="text-xs text-slate-400 font-medium">
+                {activeAppointments.length} active appointment{activeAppointments.length !== 1 && "s"}
+              </span>
             </div>
 
-            {/* Empty state banner */}
-            <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800/80 rounded-xl p-6">
-              <div className="p-4 bg-slate-100 dark:bg-slate-900 rounded-full mb-3 text-slate-400">
-                <History className="h-6 w-6" />
+            {activeAppointments.length === 0 ? (
+              /* Empty state */
+              <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800/80 rounded-xl p-6">
+                <div className="p-4 bg-slate-100 dark:bg-slate-900 rounded-full mb-3 text-slate-400">
+                  <History className="h-6 w-6" />
+                </div>
+                <h4 className="font-semibold text-sm">No Appointments Booked</h4>
+                <p className="text-xs text-slate-400 max-w-sm mt-1">
+                  You do not have any active appointments. Use the directory to schedule your first telehealth video call.
+                </p>
               </div>
-              <h4 className="font-semibold text-sm">No Appointments Booked</h4>
-              <p className="text-xs text-slate-400 max-w-sm mt-1">
-                You do not have any pending appointments or past consultations recorded. Use the scheduling tools to book your first video call.
-              </p>
-            </div>
+            ) : (
+              <div className="space-y-4">
+                {activeAppointments.map((appt) => {
+                  const dateStr = new Date(appt.timeSlot.date).toLocaleDateString("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    timeZone: "UTC",
+                  });
+                  return (
+                    <div 
+                      key={appt.id} 
+                      className="p-4 rounded-xl border border-slate-100 dark:border-slate-850 bg-white dark:bg-slate-900/40 hover:border-teal-500/20 transition duration-300 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-sm text-slate-800 dark:text-slate-200">
+                            Dr. {appt.doctor.user.name}
+                          </h4>
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-teal-550/10 text-teal-600 dark:text-teal-400 uppercase tracking-wider">
+                            {appt.doctor.specialization}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5" /> {dateStr}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5" /> {appt.timeSlot.startTime} - {appt.timeSlot.endTime}
+                          </span>
+                        </div>
+                        {appt.reason && (
+                          <p className="text-xs text-slate-400 mt-1">
+                            Reason: <span className="text-slate-600 dark:text-slate-300">{appt.reason}</span>
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 self-end md:self-center">
+                        <button
+                          onClick={() => handleOpenReschedule(appt)}
+                          className="inline-flex items-center justify-center gap-1.5 p-2 px-3 border border-slate-200 dark:border-slate-800 hover:border-teal-500/30 dark:hover:border-teal-550/30 text-xs font-semibold rounded-lg hover:text-teal-600 dark:hover:text-teal-400 transition cursor-pointer"
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" /> Reschedule
+                        </button>
+                        <button
+                          onClick={() => handleCancel(appt.id)}
+                          disabled={cancellingId === appt.id}
+                          className="inline-flex items-center justify-center gap-1.5 p-2 px-3 border border-slate-200 dark:border-slate-800 hover:border-red-500/20 text-xs font-semibold rounded-lg hover:text-red-500 hover:bg-red-500/[0.02] transition cursor-pointer disabled:opacity-50"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> Cancel
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
+
+          {/* Past Consultations */}
+          {pastAppointments.length > 0 && (
+            <div className="glass-card rounded-2xl p-6 border border-slate-200/60 dark:border-slate-800/80 shadow-md">
+              <h3 className="font-bold text-sm text-slate-400 uppercase tracking-wider mb-4">Past & Cancelled Consultations</h3>
+              <div className="space-y-3">
+                {pastAppointments.map((appt) => {
+                  const dateStr = new Date(appt.timeSlot.date).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    timeZone: "UTC",
+                  });
+                  return (
+                    <div key={appt.id} className="flex justify-between items-center text-xs p-3 rounded-lg bg-slate-50 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800/40">
+                      <div>
+                        <p className="font-semibold">Dr. {appt.doctor.user.name}</p>
+                        <p className="text-slate-450 text-[10px]">{dateStr} &bull; {appt.timeSlot.startTime}</p>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        appt.status === "COMPLETED"
+                          ? "bg-emerald-500/10 text-emerald-600"
+                          : "bg-rose-500/10 text-rose-500"
+                      }`}>
+                        {appt.status}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Medical Records History placeholder */}
           <div className="glass-card rounded-2xl p-6 border border-slate-200/60 dark:border-slate-800/80 shadow-md">
@@ -221,6 +436,108 @@ export default function PatientDashboardClient({ user, profile }: PatientDashboa
         </div>
 
       </div>
+
+      {/* Reschedule Calendar Dialog Modal */}
+      {reschedulingAppt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-6 shadow-2xl relative animate-scale-in">
+            <button
+              onClick={() => setReschedulingAppt(null)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-3 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-2xl">
+                <RefreshCw className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-lg text-slate-800 dark:text-slate-100">
+                  Reschedule Consultation
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Select a new available time slot with Dr. {reschedulingAppt.doctor.user.name}
+                </p>
+              </div>
+            </div>
+
+            <div className="max-h-60 overflow-y-auto mb-6 pr-1 scrollbar-thin">
+              {loadingSlots ? (
+                <div className="flex flex-col items-center justify-center py-10 text-xs text-slate-400 gap-2">
+                  <Activity className="h-5 w-5 animate-spin text-teal-600" />
+                  Loading doctor availability...
+                </div>
+              ) : availableSlots.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-4 text-center">
+                  <AlertCircle className="h-6 w-6 text-slate-400 mb-2" />
+                  <p className="text-xs font-bold text-slate-600 dark:text-slate-350">No Available Slots Found</p>
+                  <p className="text-[10px] text-slate-400 mt-1 max-w-xs leading-relaxed">
+                    Dr. {reschedulingAppt.doctor.user.name} has no open slots configured in the next 4 weeks.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {availableSlots.map((slot) => {
+                    const isSelected = slot.id === selectedNewSlotId;
+                    const dateFormatted = new Date(slot.date).toLocaleDateString("en-US", {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                      timeZone: "UTC",
+                    });
+                    return (
+                      <button
+                        key={slot.id}
+                        onClick={() => setSelectedNewSlotId(slot.id)}
+                        className={`p-3 rounded-xl border text-[11px] font-bold transition text-left flex flex-col justify-between h-20 hover:border-teal-500/30 cursor-pointer ${
+                          isSelected
+                            ? "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500"
+                            : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800/80 text-slate-700 dark:text-slate-300"
+                        }`}
+                      >
+                        <span className="text-slate-400 text-[9px]">{dateFormatted}</span>
+                        <span className="mt-1 flex items-center gap-1 font-extrabold">
+                          <Clock className="h-3 w-3 shrink-0 text-slate-400" />
+                          {slot.startTime} - {slot.endTime}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setReschedulingAppt(null)}
+                className="flex-1 py-3 px-4 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs rounded-xl transition cursor-pointer"
+                disabled={isReschedulingSubmit}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmReschedule}
+                disabled={!selectedNewSlotId || isReschedulingSubmit}
+                className="flex-1 py-3 px-4 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-bold text-xs rounded-xl shadow-lg shadow-teal-600/15 transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isReschedulingSubmit ? (
+                  <>
+                    <Activity className="h-3.5 w-3.5 animate-spin" />
+                    Updating Slot...
+                  </>
+                ) : (
+                  <>
+                    Confirm Reschedule
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

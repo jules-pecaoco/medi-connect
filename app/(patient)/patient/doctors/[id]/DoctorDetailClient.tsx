@@ -2,6 +2,9 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/toast";
+import { createAppointment } from "@/actions/appointments";
 import { 
   ArrowLeft, 
   Star, 
@@ -13,7 +16,10 @@ import {
   ShieldCheck, 
   CalendarCheck,
   CheckCircle,
-  FileText
+  FileText,
+  AlertCircle,
+  Activity,
+  X
 } from "lucide-react";
 
 interface TimeSlot {
@@ -65,20 +71,60 @@ export default function DoctorDetailClient({ doctor, slots }: DoctorDetailClient
   const dates = Object.keys(slotsByDate);
 
   // Selection states
+  const router = useRouter();
+  const { toast } = useToast();
+
   const [selectedDate, setSelectedDate] = useState<string>(dates[0] || "");
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
-  const [bookingFeedback, setBookingFeedback] = useState<boolean>(false);
+  
+  // Booking modal state
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [symptomsInput, setSymptomsInput] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const selectedSlots = selectedDate ? slotsByDate[selectedDate] : [];
   const selectedSlotDetails = slots.find((s) => s.id === selectedSlotId);
 
-  const handleBookSlotPreview = () => {
+  const handleConfirmBooking = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!selectedSlotId) return;
-    setBookingFeedback(true);
-    setTimeout(() => {
-      setBookingFeedback(false);
+    if (reason.trim().length < 5) {
+      setErrorMsg("Reason must be at least 5 characters.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMsg(null);
+
+    const result = await createAppointment({
+      slotId: selectedSlotId,
+      reason,
+      symptoms: symptomsInput,
+    });
+
+    setIsSubmitting(false);
+
+    if (result.success) {
+      toast({
+        title: "Appointment Booked!",
+        description: `Your consultation with Dr. ${doctor.user.name} has been successfully scheduled.`,
+        type: "success",
+      });
+      setIsBookingModalOpen(false);
       setSelectedSlotId(null);
-    }, 4500);
+      setReason("");
+      setSymptomsInput("");
+      router.refresh();
+    } else {
+      setErrorMsg(result.error);
+      toast({
+        title: "Booking Failed",
+        description: result.error || "An error occurred during booking.",
+        type: "error",
+      });
+    }
   };
 
   const initials = doctor.user.name
@@ -244,7 +290,7 @@ export default function DoctorDetailClient({ doctor, slots }: DoctorDetailClient
                   </div>
                 </div>
 
-                {/* Reservation action preview box */}
+                {/* Booking confirmation panel */}
                 {selectedSlotId && selectedSlotDetails && (
                   <div className="mt-8 p-6 rounded-2xl bg-teal-500/5 border border-teal-500/10 flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in">
                     <div>
@@ -257,7 +303,10 @@ export default function DoctorDetailClient({ doctor, slots }: DoctorDetailClient
                     </div>
 
                     <button
-                      onClick={handleBookSlotPreview}
+                      onClick={() => {
+                        setErrorMsg(null);
+                        setIsBookingModalOpen(true);
+                      }}
                       className="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-semibold text-xs rounded-xl shadow-md shadow-teal-600/10 transition cursor-pointer"
                     >
                       Book Appointment Slot
@@ -265,15 +314,111 @@ export default function DoctorDetailClient({ doctor, slots }: DoctorDetailClient
                   </div>
                 )}
 
-                {/* Simulation/Visual Success box for Phase 2 */}
-                {bookingFeedback && (
-                  <div className="mt-6 p-4 rounded-xl border border-emerald-500/10 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 text-xs flex items-start gap-3 animate-fade-in">
-                    <CheckCircle className="h-5 w-5 shrink-0 text-emerald-600 mt-0.5" />
-                    <div>
-                      <p className="font-bold">Consultation Slot Locked Visually!</p>
-                      <p className="mt-0.5 text-slate-500 dark:text-slate-400">
-                        Appointment booking, calendar locks, and Pusher real-time notifications are scheduled to be fully integrated in **Phase 4**. Your visual choice functions perfectly!
-                      </p>
+                {/* Real Booking Modal Overlay */}
+                {isBookingModalOpen && selectedSlotDetails && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-6 md:p-8 shadow-2xl relative animate-scale-in">
+                      <button
+                        onClick={() => setIsBookingModalOpen(false)}
+                        className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+
+                      <div className="flex items-center gap-3 mb-5">
+                        <div className="p-3 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-2xl">
+                          <CalendarCheck className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <h3 className="font-extrabold text-lg text-slate-800 dark:text-slate-100">
+                            Confirm Appointment Booking
+                          </h3>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            Consulting with Dr. {doctor.user.name}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Consultation details badge */}
+                      <div className="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/40 rounded-2xl text-xs space-y-2 mb-6">
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Date & Time:</span>
+                          <span className="font-bold text-slate-700 dark:text-slate-200">
+                            {selectedDate} @ {selectedSlotDetails.startTime} - {selectedSlotDetails.endTime}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Consultation Fee:</span>
+                          <span className="font-extrabold text-teal-600 dark:text-teal-400">
+                            ${doctor.consultationFee.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <form onSubmit={handleConfirmBooking} className="space-y-4">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                            Reason for Visit *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                            placeholder="e.g. Chronic chest tightening, high blood pressure checkup"
+                            className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs input-glow transition"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                            Describe Your Symptoms (Optional)
+                          </label>
+                          <textarea
+                            value={symptomsInput}
+                            onChange={(e) => setSymptomsInput(e.target.value)}
+                            placeholder="Describe what you are experiencing in detail..."
+                            rows={3}
+                            className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs input-glow transition resize-none"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+
+                        {errorMsg && (
+                          <div className="flex items-start gap-2.5 p-3 rounded-xl border border-rose-500/10 bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 text-xs animate-fade-in">
+                            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                            <span>{errorMsg}</span>
+                          </div>
+                        )}
+
+                        <div className="flex gap-3 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => setIsBookingModalOpen(false)}
+                            className="flex-1 py-3 px-4 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs rounded-xl transition cursor-pointer"
+                            disabled={isSubmitting}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="flex-1 py-3 px-4 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-bold text-xs rounded-xl shadow-lg shadow-teal-600/15 transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isSubmitting ? (
+                              <>
+                                <Activity className="h-3.5 w-3.5 animate-spin" />
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                Confirm Booking
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </form>
                     </div>
                   </div>
                 )}
