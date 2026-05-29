@@ -649,7 +649,7 @@ None currently.
 
 ## Repo & Deploy
 
-Repo URL: [fill in]
+Repo URL: [https://github.com/jules-pecaoco/medi-connect](https://github.com/jules-pecaoco/medi-connect)
 
 Deployed URL: [fill in]
 
