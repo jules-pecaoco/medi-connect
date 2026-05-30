@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createDailyRoom } from "@/lib/daily";
 import { combineScheduleDateAndTime, isScheduleSlotInFuture } from "@/lib/date-utils";
+import { getDailyRoomExpTimestamp } from "@/lib/consultation-window";
 
 const createBookingSchema = z.object({
   slotId: z.string().min(1, "Time slot is required"),
@@ -17,6 +18,21 @@ const createBookingSchema = z.object({
 function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
+
+function revalidateAppointmentPaths(doctorId: string) {
+  revalidatePath("/patient/dashboard");
+  revalidatePath("/doctor/dashboard");
+  revalidatePath("/patient/doctors");
+  revalidatePath(`/patient/doctors/${doctorId}`);
+  revalidatePath("/doctor/schedule");
+  revalidatePath("/patient/records");
+}
+
+const appointmentInclude = {
+  doctor: { include: { user: { select: { id: true, name: true } } } },
+  patient: { include: { user: { select: { id: true, name: true } } } },
+  timeSlot: true,
+} as const;
 
 /** Create an appointment with atomic slot locking and Pusher real-time trigger */
 export async function createAppointment(raw: unknown) {
@@ -62,28 +78,47 @@ export async function createAppointment(raw: unknown) {
         throw new Error("This time slot has already passed. Please choose a future appointment time.");
       }
 
+      const existingAppt = await tx.appointment.findUnique({
+        where: { timeSlotId: slotId },
+      });
+
+      if (existingAppt && existingAppt.status !== "CANCELLED") {
+        throw new Error("This time slot has already been booked by another patient.");
+      }
+
       // 2. Mark slot as BOOKED
       await tx.timeSlot.update({
         where: { id: slotId },
         data: { status: "BOOKED" },
       });
 
-      // 3. Create the appointment
-      const appt = await tx.appointment.create({
-        data: {
-          patientId: patient.id,
-          doctorId: slot.doctorId,
-          timeSlotId: slotId,
-          status: "CONFIRMED",
-          reason,
-          symptoms,
-        },
-        include: {
-          doctor: { include: { user: { select: { id: true, name: true } } } },
-          patient: { include: { user: { select: { id: true, name: true } } } },
-          timeSlot: true,
-        },
-      });
+      // 3. Create or reactivate appointment (reuse row after cancel to satisfy timeSlotId unique)
+      const appt = existingAppt
+        ? await tx.appointment.update({
+            where: { id: existingAppt.id },
+            data: {
+              patientId: patient.id,
+              doctorId: slot.doctorId,
+              status: "CONFIRMED",
+              reason,
+              symptoms,
+              notes: null,
+              prescription: null,
+              videoRoomUrl: null,
+            },
+            include: appointmentInclude,
+          })
+        : await tx.appointment.create({
+            data: {
+              patientId: patient.id,
+              doctorId: slot.doctorId,
+              timeSlotId: slotId,
+              status: "CONFIRMED",
+              reason,
+              symptoms,
+            },
+            include: appointmentInclude,
+          });
 
       return appt;
     });
@@ -92,8 +127,8 @@ export async function createAppointment(raw: unknown) {
     let videoRoomUrl: string | null = null;
     try {
       const slotEnd = combineScheduleDateAndTime(appointment.timeSlot.date, appointment.timeSlot.endTime);
-      const expTimestamp = Math.floor((slotEnd.getTime() + 2 * 60 * 60 * 1000) / 1000); // 2 hours buffer
-      
+      const expTimestamp = getDailyRoomExpTimestamp(slotEnd);
+
       videoRoomUrl = await createDailyRoom(appointment.id, expTimestamp);
       if (videoRoomUrl) {
         await db.appointment.update({
@@ -129,8 +164,7 @@ export async function createAppointment(raw: unknown) {
       }),
     ]);
 
-    revalidatePath("/patient/dashboard");
-    revalidatePath(`/patient/doctors/${appointment.doctorId}`);
+    revalidateAppointmentPaths(appointment.doctorId);
 
     return { success: true as const, data: appointment };
   } catch (error: unknown) {
@@ -202,8 +236,7 @@ export async function cancelAppointment(appointmentId: string) {
       }),
     ]);
 
-    revalidatePath("/patient/dashboard");
-    revalidatePath("/doctor/dashboard");
+    revalidateAppointmentPaths(appt.doctorId);
 
     return { success: true as const };
   } catch (error: unknown) {
@@ -300,7 +333,7 @@ export async function rescheduleAppointment(appointmentId: string, newSlotId: st
       }),
     ]);
 
-    revalidatePath("/patient/dashboard");
+    revalidateAppointmentPaths(appt.doctorId);
 
     return { success: true as const, data: result };
   } catch (error: unknown) {
@@ -420,9 +453,7 @@ export async function completeAppointment(appointmentId: string, notes: string, 
       message: `Dr. ${appt.doctor.user.name} has completed your session and logged notes & prescriptions.`,
     });
 
-    revalidatePath("/patient/dashboard");
-    revalidatePath("/patient/records");
-    revalidatePath("/doctor/dashboard");
+    revalidateAppointmentPaths(appt.doctorId);
 
     return { success: true as const, data: updated };
   } catch (error: unknown) {

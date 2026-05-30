@@ -550,7 +550,15 @@ export default function PatientDashboardClient({
         </main>
       </div>
 
-      <MobileTabBar nav={PATIENT_NAV} activeTab={activeTab} showMoreTabs={showMoreTabs} setShowMoreTabs={setShowMoreTabs} switchTab={switchTab} />
+      <MobileTabBar
+        nav={PATIENT_NAV}
+        activeTab={activeTab}
+        showMoreTabs={showMoreTabs}
+        setShowMoreTabs={setShowMoreTabs}
+        switchTab={switchTab}
+        onSignOut={handleSignOut}
+        isSigningOut={isSigningOut}
+      />
 
       {reschedulingAppt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-fade-in">
@@ -662,28 +670,62 @@ function MobileTabBar({
   showMoreTabs,
   setShowMoreTabs,
   switchTab,
+  onSignOut,
+  isSigningOut,
 }: {
   nav: typeof PATIENT_NAV;
   activeTab: PatientTab;
   showMoreTabs: boolean;
   setShowMoreTabs: React.Dispatch<React.SetStateAction<boolean>>;
   switchTab: (tab: PatientTab) => void;
+  onSignOut: () => void;
+  isSigningOut: boolean;
 }) {
   const primary = nav.slice(0, 4);
   const more = nav.slice(4);
 
+  const selectMoreTab = (tab: PatientTab) => {
+    switchTab(tab);
+    setShowMoreTabs(false);
+  };
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-sage-200 bg-white md:hidden">
       {showMoreTabs && (
-        <div className="absolute bottom-full right-2 mb-2 w-48 rounded-2xl border border-sage-200 bg-white p-2 shadow-clinical">
+        <div className="absolute bottom-full right-2 mb-2 w-52 rounded-2xl border border-sage-200 bg-white p-2 shadow-clinical">
           {more.map((item) => {
             const Icon = item.icon;
             return (
-              <button key={item.id} onClick={() => switchTab(item.id)} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-teal-700 hover:bg-teal-50">
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => selectMoreTab(item.id)}
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-teal-700 hover:bg-teal-50"
+              >
                 <Icon className="h-4 w-4" /> {item.label}
               </button>
             );
           })}
+          <div className="my-1 border-t border-sage-200" />
+          <button
+            type="button"
+            onClick={() => {
+              setShowMoreTabs(false);
+              onSignOut();
+            }}
+            disabled={isSigningOut}
+            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
+          >
+            {isSigningOut ? (
+              <>
+                <Activity className="h-4 w-4 animate-spin" /> Signing out...
+              </>
+            ) : (
+              <>
+                <LogOut className="h-4 w-4" /> Sign Out
+              </>
+            )}
+          </button>
         </div>
       )}
       <div className="grid grid-cols-5">

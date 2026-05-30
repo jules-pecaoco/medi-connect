@@ -425,6 +425,8 @@ PUSHER_SECRET=
 NEXT_PUBLIC_PUSHER_KEY=
 NEXT_PUBLIC_PUSHER_CLUSTER=
 BLOB_READ_WRITE_TOKEN=
+# Testing only: allow video join before the 10-minute pre-slot window
+NEXT_PUBLIC_ALLOW_EARLY_CONSULT_JOIN=
 ```
 
 ---
