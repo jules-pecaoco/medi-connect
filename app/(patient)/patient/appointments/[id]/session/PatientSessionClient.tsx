@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { combineScheduleDateAndTime } from "@/lib/date-utils";
+import { getConsultationJoinState } from "@/lib/consultation-window";
 import { 
   ChevronLeft, 
   Clock, 
@@ -53,11 +54,6 @@ export default function PatientSessionClient({ appointment }: PatientSessionClie
     appointment.timeSlot.endTime
   );
 
-  // The 10 minutes early join window start
-  const earlyJoinBoundary = new Date(slotStart.getTime() - 10 * 60 * 1000);
-  // Session stays joinable up to 1 hour after the slot officially ends
-  const joinCloseBoundary = new Date(slotEnd.getTime() + 60 * 60 * 1000);
-
   if (!now) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 text-xs text-slate-400 gap-2">
@@ -67,9 +63,12 @@ export default function PatientSessionClient({ appointment }: PatientSessionClie
     );
   }
 
-  const isEarly = now < earlyJoinBoundary;
-  const isLate = now > joinCloseBoundary;
-  const isWithinWindow = now >= earlyJoinBoundary && now <= joinCloseBoundary;
+  const { earlyJoinBoundary, isEarly, isLate, isWithinWindow } = getConsultationJoinState(
+    slotStart,
+    slotEnd,
+    now,
+    { hasVideoRoom: Boolean(appointment.videoRoomUrl) }
+  );
 
   // Calculate countdown difference
   const diffMs = earlyJoinBoundary.getTime() - now.getTime();

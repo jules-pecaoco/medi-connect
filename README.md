@@ -94,6 +94,9 @@ PUSHER_SECRET=
 NEXT_PUBLIC_PUSHER_KEY=
 NEXT_PUBLIC_PUSHER_CLUSTER=
 BLOB_READ_WRITE_TOKEN=
+
+# Testing only: join video consultation before the 10-minute pre-slot window
+NEXT_PUBLIC_ALLOW_EARLY_CONSULT_JOIN=
 ```
 
 For local development, `NEXTAUTH_URL` should usually be:
@@ -101,6 +104,24 @@ For local development, `NEXTAUTH_URL` should usually be:
 ```bash
 NEXTAUTH_URL=http://localhost:3000
 ```
+
+To test early video join (both patient and doctor can enter the Daily room immediately):
+
+```bash
+NEXT_PUBLIC_ALLOW_EARLY_CONSULT_JOIN=true
+```
+
+### Real-time notification QA
+
+Pusher toasts are delivered on **every authenticated route** (dashboard tabs, doctor listing, records, session pages, etc.) via the root layout `NotificationListener`. The sidebar does not control subscriptions.
+
+1. Set all four Pusher variables locally and on Vercel (`PUSHER_APP_ID`, `PUSHER_SECRET`, `NEXT_PUBLIC_PUSHER_KEY`, `NEXT_PUBLIC_PUSHER_CLUSTER`). Client keys must be present at **build** time on Vercel.
+2. Open two browsers (e.g. normal window = patient, incognito = doctor) and log in as different roles.
+3. Keep both tabs inside the app on any page (not `/login`).
+4. Book, cancel, or reschedule from one side; the other should show a bottom-right toast and refresh data.
+5. In DevTools console, confirm: `[Pusher Client] Subscribed to channel: patient-…` or `doctor-…`.
+
+Events: `appointment.booked`, `appointment.cancelled`, `appointment.updated`, `appointment.completed`.
 
 ## Database
 

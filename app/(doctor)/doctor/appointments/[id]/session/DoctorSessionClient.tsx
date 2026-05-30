@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/toast";
 import { completeAppointment } from "@/actions/appointments";
 import { combineScheduleDateAndTime } from "@/lib/date-utils";
+import { getConsultationJoinState } from "@/lib/consultation-window";
 import {
   ChevronLeft,
   Clock,
@@ -175,9 +176,6 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
   const slotStart = combineScheduleDateAndTime(appointment.timeSlot.date, appointment.timeSlot.startTime);
   const slotEnd = combineScheduleDateAndTime(appointment.timeSlot.date, appointment.timeSlot.endTime);
 
-  const earlyJoinBoundary = new Date(slotStart.getTime() - 10 * 60 * 1000);
-  const joinCloseBoundary = new Date(slotEnd.getTime() + 60 * 60 * 1000);
-
   const handleComplete = async () => {
     if (!notes.trim()) {
       toast({
@@ -249,9 +247,12 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
     );
   }
 
-  const isEarly = now < earlyJoinBoundary;
-  const isLate = now > joinCloseBoundary;
-  const isWithinWindow = now >= earlyJoinBoundary && now <= joinCloseBoundary;
+  const { earlyJoinBoundary, isEarly, isLate, isWithinWindow } = getConsultationJoinState(
+    slotStart,
+    slotEnd,
+    now,
+    { hasVideoRoom: Boolean(appointment.videoRoomUrl) }
+  );
 
   const diffMs = earlyJoinBoundary.getTime() - now.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
