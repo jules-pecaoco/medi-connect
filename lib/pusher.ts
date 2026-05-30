@@ -17,14 +17,16 @@ export async function triggerNotification(
   data: any
 ) {
   try {
-    if (
-      !process.env.PUSHER_APP_ID ||
-      !process.env.PUSHER_SECRET ||
-      !process.env.NEXT_PUBLIC_PUSHER_KEY ||
-      !process.env.NEXT_PUBLIC_PUSHER_CLUSTER
-    ) {
+    const missing = [
+      !process.env.PUSHER_APP_ID && "PUSHER_APP_ID",
+      !process.env.PUSHER_SECRET && "PUSHER_SECRET",
+      !process.env.NEXT_PUBLIC_PUSHER_KEY && "NEXT_PUBLIC_PUSHER_KEY",
+      !process.env.NEXT_PUBLIC_PUSHER_CLUSTER && "NEXT_PUBLIC_PUSHER_CLUSTER",
+    ].filter(Boolean);
+
+    if (missing.length > 0) {
       console.warn(
-        `[Pusher Webhook Sim] Pusher credentials missing. Notification on channel: "${channel}" for event: "${event}" bypassed.`
+        `[Pusher] Server credentials missing (${missing.join(", ")}). Skipped "${event}" on channel "${channel}".`
       );
       return;
     }

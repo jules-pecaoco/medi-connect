@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation";
 interface NotificationListenerProps {
   userId: string;
   role: "PATIENT" | "DOCTOR";
+  pusherKey: string;
+  pusherCluster: string;
 }
 
 type NotificationPayload = { title: string; message: string };
@@ -15,6 +17,8 @@ type NotificationPayload = { title: string; message: string };
 export default function NotificationListener({
   userId,
   role,
+  pusherKey,
+  pusherCluster,
 }: NotificationListenerProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -30,11 +34,11 @@ export default function NotificationListener({
   }, [router]);
 
   useEffect(() => {
-    const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
-    const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
-
     if (!pusherKey || !pusherCluster) {
-      console.warn("Pusher environment variables missing on client. Real-time listening skipped.");
+      console.warn(
+        "[Pusher Client] Missing key or cluster from server config. Real-time listening skipped.",
+        { hasKey: Boolean(pusherKey), hasCluster: Boolean(pusherCluster) }
+      );
       return;
     }
 
@@ -104,7 +108,17 @@ export default function NotificationListener({
       });
     };
 
+    const onSubscriptionError = (status: { type?: string; error?: string }) => {
+      console.error(`[Pusher Client] Subscription failed for ${channelName}:`, status);
+    };
+
+    const onConnectionError = (err: { type?: string; error?: { message?: string } }) => {
+      console.error("[Pusher Client] Connection error:", err);
+    };
+
     channel.bind("pusher:subscription_succeeded", onSubscriptionSucceeded);
+    channel.bind("pusher:subscription_error", onSubscriptionError);
+    pusher.connection.bind("error", onConnectionError);
 
     if (channel.subscribed) {
       onSubscriptionSucceeded();
@@ -112,11 +126,13 @@ export default function NotificationListener({
 
     return () => {
       channel.unbind("pusher:subscription_succeeded", onSubscriptionSucceeded);
+      channel.unbind("pusher:subscription_error", onSubscriptionError);
+      pusher.connection.unbind("error", onConnectionError);
       channel.unbind_all();
       pusher.unsubscribe(channelName);
       pusher.disconnect();
     };
-  }, [userId, role]);
+  }, [userId, role, pusherKey, pusherCluster]);
 
   return null;
 }

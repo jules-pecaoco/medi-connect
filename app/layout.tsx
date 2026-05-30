@@ -36,6 +36,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await auth();
+  const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY ?? "";
+  const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER ?? "";
 
   return (
     <html lang="en" className={`${dmSans.variable} ${dmSerif.variable} ${jetBrainsMono.variable} h-full scroll-smooth`}>
@@ -44,7 +46,14 @@ export default async function RootLayout({
           <Suspense fallback={null}>
             <NavigationProgress />
           </Suspense>
-          {session?.user?.id && <NotificationListener userId={session.user.id} role={session.user.role as "PATIENT" | "DOCTOR"} />}
+          {session?.user?.id && (
+            <NotificationListener
+              userId={session.user.id}
+              role={session.user.role as "PATIENT" | "DOCTOR"}
+              pusherKey={pusherKey}
+              pusherCluster={pusherCluster}
+            />
+          )}
           <main className="flex-1 flex flex-col relative">{children}</main>
         </ToastProvider>
       </body>
