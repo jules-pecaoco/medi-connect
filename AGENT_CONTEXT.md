@@ -288,7 +288,7 @@ Avoid:
 
 # AI Recommendation Engine
 
-Use the latest stable Gemini production model available via the Anthropic SDK.
+Use the latest stable Gemini production model available via the Google Gemini API.
 
 Prompt:
 
@@ -412,9 +412,12 @@ Only proceed after current phase is manually verified working.
 
 ```bash
 DATABASE_URL=
+AUTH_SECRET=
+AUTH_URL=
+AUTH_TRUST_HOST=
 NEXTAUTH_SECRET=
 NEXTAUTH_URL=
-ANTHROPIC_API_KEY=
+GEMINI_API_KEY=
 DAILY_API_KEY=
 PUSHER_APP_ID=
 PUSHER_SECRET=
@@ -551,6 +554,13 @@ These are deliberate product/UX improvements added after the required MVP medica
   - Doctors can type at least 2 letters in the prescription textarea and press `Tab` to expand the current line into a full dosage/SIG instruction.
   - Prescriptions remain editable plain text on the appointment record, so no database migration or new API surface was introduced.
   - Implemented in `app/(doctor)/doctor/appointments/[id]/session/DoctorSessionClient.tsx`.
+- Visual/UX refinement pass:
+  - Added clinical-warmth design tokens, shadcn-style primitives, light-mode enforcement, route fades, list staggers, card lift states, modal scale-in, status pulse dots, skeleton motion, and Gemini typing dots.
+  - Refined auth pages, onboarding, doctor listing, schedule, records, symptoms, session screens, and dashboard surfaces without changing backend contracts.
+- Dashboard workspace shell experiment:
+  - Patient and doctor dashboards were restructured into local tabbed workspace shells with sidebar/mobile navigation.
+  - TypeScript reportedly passed in the previous thread before interruption.
+  - Treat this as a recent UI change that still needs browser QA and lint/build confirmation before final polish.
 
 ---
 
@@ -562,7 +572,7 @@ These are deliberate product/UX improvements added after the required MVP medica
 - Auth.js authentication
 - Pusher real-time notifications
 - Daily.co video consultations
-- Gemini-based recommendation engine (replacing Gemini as per user specifications using gemini-1.5-flash)
+- Gemini-based recommendation engine (replacing Claude/Anthropic as per user specifications using gemini-1.5-flash)
 - Downgraded to Prisma 6 to maintain standard env var datasource URL patterns in schema.prisma
 - UTC date standardizations (all date searches/seeding normalize to midnight UTC to maintain absolute consistency across local node, database query parameters, and Vercel edge times)
 - Suspense Boundaries for client side bails (useSearchParams wrapped in `<Suspense>` inside auth routes to satisfy static compilation during optimized production builds)
@@ -572,16 +582,29 @@ These are deliberate product/UX improvements added after the required MVP medica
 - Global light-mode enforcement by disabling Tailwind's media-query dark mode via `@custom-variant dark (&:not(*))`.
 - Doctor consultation prescriptions use local, client-side medication templates with Tab completion; prescriptions remain stored as editable plain text on the appointment record.
 - Patient booking and rescheduling now enforce future-only appointment slots at both availability-fetch and mutation layers.
+- Production Vercel auth uses uploaded environment variables, including `AUTH_URL`, `AUTH_SECRET`, `AUTH_TRUST_HOST=true`, `NEXTAUTH_URL`, and `NEXTAUTH_SECRET`.
+- `.vercelignore` excludes local `.env` files from future CLI deployments.
 
 ---
 
 ## Known Issues
 
-None currently.
+- Latest dashboard workspace-shell refactor was interrupted after code changes and TypeScript success, before a final lint/build/browser verification pass was recorded.
+- `.vercelignore` was added after the successful env-var redeploy; the follow-up redeploy to apply that ignore file was not approved, so it will apply on the next deployment.
 
 ---
 
 ## Latest Milestone Update
+
+Uploaded production environment variables to Vercel and restored the live deployment auth flow at `https://medi-connect-jade.vercel.app`.
+
+Added `.vercelignore` to keep local `.env` files out of future CLI deployments.
+
+Applied visual/UX refinements across the app, including design tokens, shadcn-style primitives, motion utilities, auth/onboarding polish, doctor listing refinements, schedule/records/symptoms polish, and status/loading feedback.
+
+Fixed compressed Active Consulting Blocks in doctor schedule and normalized Patient Dashboard "Find & Schedule Doctor" card styling.
+
+Started a patient/doctor dashboard workspace-shell restructure with local tabs and sidebar/mobile navigation. Code was changed and TypeScript reportedly passed, but the thread was interrupted before final verification was recorded.
 
 Completed doctor prescription Tab autocomplete during live consultation.
 
@@ -595,16 +618,38 @@ Modified files:
 
 - `actions/appointments.ts`
 - `actions/schedule.ts`
+- `app/globals.css`
+- `app/layout.tsx`
+- `app/(auth)/login/page.tsx`
+- `app/(auth)/register/page.tsx`
+- `app/(doctor)/doctor/dashboard/DoctorDashboardClient.tsx`
+- `app/(doctor)/doctor/schedule/DoctorScheduleClient.tsx`
+- `app/(patient)/patient/dashboard/PatientDashboardClient.tsx`
+- `app/(patient)/patient/doctors/DoctorListingClient.tsx`
 - `app/(patient)/patient/doctors/[id]/DoctorDetailClient.tsx`
+- `app/(patient)/patient/records/PatientRecordsClient.tsx`
+- `app/(patient)/patient/symptoms/SymptomsClient.tsx`
+- `app/(patient)/patient/appointments/[id]/session/PatientSessionClient.tsx`
 - `app/(doctor)/doctor/appointments/[id]/session/DoctorSessionClient.tsx`
+- `.vercelignore`
 - `AGENT_CONTEXT.md`
+- `components/ui/avatar.tsx`
+- `components/ui/badge.tsx`
+- `components/ui/button.tsx`
+- `components/ui/card.tsx`
+- `components/ui/input.tsx`
+- `components/ui/skeleton.tsx`
+- `components/ui/toast.tsx`
 - `lib/date-utils.ts`
+- `lib/utils.ts`
 - `README.md`
+- `tailwind.config.ts`
 
 Verification:
 
 - `npx tsc --noEmit` passed.
 - `npx eslint actions/appointments.ts actions/schedule.ts lib/date-utils.ts "app/(patient)/patient/doctors/[id]/DoctorDetailClient.tsx"` passed.
+- `npx tsc --noEmit` reportedly passed after the latest dashboard workspace-shell changes.
 - Full `npm run lint` was previously blocked by generated `.vercel/.next` output and pre-existing project lint issues unrelated to these changes.
 
 ---
@@ -677,16 +722,19 @@ Verification:
 
 | Variable                   | Local | Vercel |
 | -------------------------- | ----- | ------ |
-| DATABASE_URL               | ☑     | ☐      |
-| NEXTAUTH_SECRET            | ☑     | ☐      |
-| NEXTAUTH_URL               | ☑     | ☐      |
-| GEMINI_API_KEY             | ☑     | ☐      |
-| DAILY_API_KEY              | ☑     | ☐      |
-| PUSHER_APP_ID              | ☑     | ☐      |
-| PUSHER_SECRET              | ☑     | ☐      |
-| NEXT_PUBLIC_PUSHER_KEY     | ☑     | ☐      |
-| NEXT_PUBLIC_PUSHER_CLUSTER | ☑     | ☐      |
-| BLOB_READ_WRITE_TOKEN      | ☑     | ☐      |
+| DATABASE_URL               | ☑     | ☑      |
+| AUTH_SECRET                | ☑     | ☑      |
+| AUTH_URL                   | ☑     | ☑      |
+| AUTH_TRUST_HOST            | ☑     | ☑      |
+| NEXTAUTH_SECRET            | ☑     | ☑      |
+| NEXTAUTH_URL               | ☑     | ☑      |
+| GEMINI_API_KEY             | ☑     | ☑      |
+| DAILY_API_KEY              | ☑     | ☑      |
+| PUSHER_APP_ID              | ☑     | ☑      |
+| PUSHER_SECRET              | ☑     | ☑      |
+| NEXT_PUBLIC_PUSHER_KEY     | ☑     | ☑      |
+| NEXT_PUBLIC_PUSHER_CLUSTER | ☑     | ☑      |
+| BLOB_READ_WRITE_TOKEN      | ☑     | ☑      |
 
 ---
 
