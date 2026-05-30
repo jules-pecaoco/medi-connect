@@ -56,7 +56,7 @@ Complete all required features before building extras.
 | ORM                      | Prisma ORM                                        |
 | Authentication           | Auth.js (NextAuth v5 stable)                      |
 | Real-time Notifications  | Pusher Channels                                   |
-| AI Recommendation Engine | Anthropic Claude API (latest stable Sonnet model) |
+| AI Recommendation Engine | Gemini (latest stable Sonnet model) |
 | Video Consultation       | Daily.co                                          |
 | File Storage             | Vercel Blob                                       |
 | Deployment               | Vercel                                            |
@@ -537,6 +537,7 @@ STATUS: Completed
 ### Phase 6
 
 - [x] Consultation notes
+- [x] Prescription autocomplete with Tab completion
 - [x] Patient records
 
 ---
@@ -557,12 +558,36 @@ STATUS: Completed
 - Global toast provider-based message dispatcher mounted at layout level.
 - Multi-client subscription model for patient-{id} and doctor-{id} real-time Pusher listener channels.
 - Global light-mode enforcement by disabling Tailwind's media-query dark mode via `@custom-variant dark (&:not(*))`.
+- Doctor consultation prescriptions use local, client-side medication templates with Tab completion; prescriptions remain stored as editable plain text on the appointment record.
 
 ---
 
 ## Known Issues
 
 None currently.
+
+---
+
+## Latest Milestone Update
+
+Completed doctor prescription Tab autocomplete during live consultation.
+
+Fixed patient booking/rescheduling so appointments can only be made for future slot start times. Same-day slots whose start time has already passed are filtered out of patient availability and rejected by server-side booking mutations.
+
+Modified files:
+
+- `actions/appointments.ts`
+- `actions/schedule.ts`
+- `app/(patient)/patient/doctors/[id]/DoctorDetailClient.tsx`
+- `app/(doctor)/doctor/appointments/[id]/session/DoctorSessionClient.tsx`
+- `AGENT_CONTEXT.md`
+- `lib/date-utils.ts`
+
+Verification:
+
+- `npx tsc --noEmit` passed.
+- `npx eslint actions/appointments.ts actions/schedule.ts lib/date-utils.ts "app/(patient)/patient/doctors/[id]/DoctorDetailClient.tsx"` passed.
+- Full `npm run lint` was previously blocked by generated `.vercel/.next` output and pre-existing project lint issues unrelated to these changes.
 
 ---
 

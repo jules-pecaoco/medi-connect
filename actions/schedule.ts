@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import db from "@/lib/db";
 import { scheduleSchema } from "@/validators/auth";
-import { addDays, startOfDay } from "@/lib/date-utils";
+import { addDays, isScheduleSlotInFuture, startOfDay } from "@/lib/date-utils";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -208,5 +208,5 @@ export async function getDoctorAvailableSlots(doctorId: string) {
     orderBy: [{ date: "asc" }, { startTime: "asc" }],
   });
 
-  return { success: true as const, data: slots };
+  return { success: true as const, data: slots.filter((slot) => isScheduleSlotInFuture(slot.date, slot.startTime)) };
 }

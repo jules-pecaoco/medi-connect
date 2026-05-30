@@ -31,3 +31,7 @@ export function combineScheduleDateAndTime(date: Date | string, timeStr: string)
     0
   );
 }
+
+export function isScheduleSlotInFuture(date: Date | string, startTime: string, now = new Date()): boolean {
+  return combineScheduleDateAndTime(date, startTime).getTime() > now.getTime();
+}

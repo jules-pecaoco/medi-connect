@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/toast";
 import { completeAppointment } from "@/actions/appointments";
 import { combineScheduleDateAndTime } from "@/lib/date-utils";
-import { 
-  ChevronLeft, 
-  Clock, 
-  AlertCircle, 
+import {
+  ChevronLeft,
+  Clock,
+  AlertCircle,
   Calendar,
   Compass,
   ArrowRight,
@@ -19,8 +19,84 @@ import {
   HeartHandshake,
   Activity,
   ClipboardList,
-  X
+  Pill,
+  X,
 } from "lucide-react";
+
+const PRESCRIPTION_TEMPLATES = [
+  {
+    name: "Parace",
+    strength: "500mg tablet",
+    category: "Pain / fever",
+    sig: "Parace 500mg tablet - Take 1 tablet by mouth every 6 hours as needed for fever or pain. Maximum 4 tablets in 24 hours. Dispense: 12 tablets.",
+  },
+  {
+    name: "Ibuprofen",
+    strength: "400mg tablet",
+    category: "Pain / inflammation",
+    sig: "Ibuprofen 400mg tablet - Take 1 tablet by mouth every 8 hours after meals as needed for pain or inflammation. Dispense: 9 tablets.",
+  },
+  {
+    name: "Cetirizine",
+    strength: "10mg tablet",
+    category: "Allergy",
+    sig: "Cetirizine 10mg tablet - Take 1 tablet by mouth once daily at night as needed for allergy symptoms. Dispense: 7 tablets.",
+  },
+  {
+    name: "Loratadine",
+    strength: "10mg tablet",
+    category: "Allergy",
+    sig: "Loratadine 10mg tablet - Take 1 tablet by mouth once daily as needed for allergy symptoms. Dispense: 7 tablets.",
+  },
+  {
+    name: "Amoxicillin",
+    strength: "500mg capsule",
+    category: "Antibiotic",
+    sig: "Amoxicillin 500mg capsule - Take 1 capsule by mouth 3 times daily for 7 days. Complete the full course. Dispense: 21 capsules.",
+  },
+  {
+    name: "Co-amoxiclav",
+    strength: "625mg tablet",
+    category: "Antibiotic",
+    sig: "Co-amoxiclav 625mg tablet - Take 1 tablet by mouth every 8 hours after meals for 5 days. Complete the full course. Dispense: 15 tablets.",
+  },
+  {
+    name: "Azithromycin",
+    strength: "500mg tablet",
+    category: "Antibiotic",
+    sig: "Azithromycin 500mg tablet - Take 1 tablet by mouth once daily for 3 days. Complete the full course. Dispense: 3 tablets.",
+  },
+  {
+    name: "Omeprazole",
+    strength: "20mg capsule",
+    category: "Gastric",
+    sig: "Omeprazole 20mg capsule - Take 1 capsule by mouth once daily 30 minutes before breakfast for 14 days. Dispense: 14 capsules.",
+  },
+  {
+    name: "Loperamide",
+    strength: "2mg capsule",
+    category: "Diarrhea",
+    sig: "Loperamide 2mg capsule - Take 2 capsules initially, then 1 capsule after each loose stool as needed. Maximum 8 capsules in 24 hours. Dispense: 8 capsules.",
+  },
+  {
+    name: "Salbutamol",
+    strength: "100mcg inhaler",
+    category: "Respiratory",
+    sig: "Salbutamol 100mcg inhaler - Inhale 1 to 2 puffs every 4 to 6 hours as needed for wheeze or shortness of breath. Dispense: 1 inhaler.",
+  },
+  {
+    name: "Metformin",
+    strength: "500mg tablet",
+    category: "Diabetes",
+    sig: "Metformin 500mg tablet - Take 1 tablet by mouth twice daily with meals. Dispense: 28 tablets.",
+  },
+  {
+    name: "Amlodipine",
+    strength: "5mg tablet",
+    category: "Hypertension",
+    sig: "Amlodipine 5mg tablet - Take 1 tablet by mouth once daily. Dispense: 14 tablets.",
+  },
+] as const;
 
 interface DoctorSessionClientProps {
   appointment: {
@@ -75,7 +151,7 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
   const router = useRouter();
   const { toast } = useToast();
   const [now, setNow] = useState<Date | null>(null);
-  
+
   // Editor States
   const [notes, setNotes] = useState(appointment.notes);
   const [prescription, setPrescription] = useState(appointment.prescription);
@@ -96,14 +172,8 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
     };
   }, []);
 
-  const slotStart = combineScheduleDateAndTime(
-    appointment.timeSlot.date,
-    appointment.timeSlot.startTime
-  );
-  const slotEnd = combineScheduleDateAndTime(
-    appointment.timeSlot.date,
-    appointment.timeSlot.endTime
-  );
+  const slotStart = combineScheduleDateAndTime(appointment.timeSlot.date, appointment.timeSlot.startTime);
+  const slotEnd = combineScheduleDateAndTime(appointment.timeSlot.date, appointment.timeSlot.endTime);
 
   const earlyJoinBoundary = new Date(slotStart.getTime() - 10 * 60 * 1000);
   const joinCloseBoundary = new Date(slotEnd.getTime() + 60 * 60 * 1000);
@@ -139,6 +209,35 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
         type: "error",
       });
     }
+  };
+
+  const prescriptionLines = prescription.split("\n");
+  const activePrescriptionLine = prescriptionLines[prescriptionLines.length - 1].trim();
+  const prescriptionCompletion =
+    activePrescriptionLine.length >= 2
+      ? PRESCRIPTION_TEMPLATES.find((template) => {
+          const searchValue = activePrescriptionLine.toLowerCase();
+          return template.name.toLowerCase().startsWith(searchValue) || template.sig.toLowerCase().startsWith(searchValue);
+        })
+      : undefined;
+
+  const handlePrescriptionKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key !== "Tab" || !prescriptionCompletion) return;
+
+    event.preventDefault();
+
+    const textarea = event.currentTarget;
+    const selectionStart = textarea.selectionStart;
+    const selectionEnd = textarea.selectionEnd;
+    const beforeSelection = prescription.slice(0, selectionStart);
+    const afterSelection = prescription.slice(selectionEnd);
+    const currentLineStart = beforeSelection.lastIndexOf("\n") + 1;
+    const nextLineBreak = afterSelection.indexOf("\n");
+    const currentLineEnd = nextLineBreak === -1 ? prescription.length : selectionEnd + nextLineBreak;
+
+    const completedPrescription = [prescription.slice(0, currentLineStart), prescriptionCompletion.sig, prescription.slice(currentLineEnd)].join("");
+
+    setPrescription(completedPrescription);
   };
 
   if (!now) {
@@ -184,7 +283,8 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
               Physician Consultation Desk
             </h1>
             <p className="text-[10px] text-slate-400 mt-0.5">
-              Active Patient: <span className="font-semibold text-teal-600 dark:text-teal-400">{appointment.patient.name}</span> &bull; Age: {appointment.patient.age} &bull; Gender: {appointment.patient.gender}
+              Active Patient: <span className="font-semibold text-teal-600 dark:text-teal-400">{appointment.patient.name}</span> &bull; Age:{" "}
+              {appointment.patient.age} &bull; Gender: {appointment.patient.gender}
             </p>
           </div>
         </div>
@@ -202,14 +302,15 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
           <div className="flex-1 flex items-center justify-center p-6">
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-w-xl w-full rounded-3xl p-8 text-center shadow-xl relative overflow-hidden animate-scale-in">
               <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-600" />
-              
+
               <div className="p-4 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-full inline-block mb-4">
                 <Clock className="h-8 w-8 animate-pulse" />
               </div>
 
               <h2 className="text-xl font-extrabold tracking-tight">Consultation Wait Room</h2>
               <p className="text-xs text-slate-450 mt-1 max-w-md mx-auto leading-relaxed">
-                Consultation room registered successfully. The telehealth video channel becomes active exactly <strong>10 minutes before</strong> your scheduled time slot.
+                Consultation room registered successfully. The telehealth video channel becomes active exactly <strong>10 minutes before</strong> your
+                scheduled time slot.
               </p>
 
               {/* Immersive Countdown Grid */}
@@ -240,7 +341,12 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
                 </div>
                 <div className="flex items-center gap-2 text-slate-400">
                   <Compass className="h-4 w-4 shrink-0" />
-                  <span>Join Window opens at <span className="font-semibold text-slate-700 dark:text-slate-350">{earlyJoinBoundary.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span></span>
+                  <span>
+                    Join Window opens at{" "}
+                    <span className="font-semibold text-slate-700 dark:text-slate-350">
+                      {earlyJoinBoundary.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                    </span>
+                  </span>
                 </div>
               </div>
 
@@ -264,7 +370,8 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
 
               <h2 className="text-lg font-extrabold tracking-tight">Room Link Expired</h2>
               <p className="text-xs text-slate-450 mt-2 leading-relaxed">
-                This physician video room has expired and closed. Consultations are automatically finalized 1 hour after the slot officially finishes to ensure schedule compliance.
+                This physician video room has expired and closed. Consultations are automatically finalized 1 hour after the slot officially finishes
+                to ensure schedule compliance.
               </p>
 
               <div className="mt-8">
@@ -301,23 +408,20 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
                     </p>
                   </div>
                 )}
-                
+
                 {/* Embedded status strip */}
                 <div className="p-3 bg-slate-950 border-t border-slate-800 px-6 flex items-center justify-between text-[11px] text-slate-500">
                   <div className="flex items-center gap-1.5 text-emerald-500 font-semibold">
                     <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400" />
                     HIPAA Secure Iframe stream
                   </div>
-                  <div>
-                    Active Session &bull; Assigned: {appointment.patient.name}
-                  </div>
+                  <div>Active Session &bull; Assigned: {appointment.patient.name}</div>
                 </div>
               </div>
             </div>
 
             {/* Right Screen: Clinical notepad & notes tab (35% width) */}
             <div className="w-full md:w-96 lg:w-[450px] shrink-0 bg-white dark:bg-slate-900 flex flex-col h-full min-h-0 border-l border-slate-200 dark:border-slate-800">
-              
               {/* Tab Selector */}
               <div className="flex border-b border-slate-200 dark:border-slate-850 p-2 bg-slate-50/50 dark:bg-slate-950/20 shrink-0">
                 <button
@@ -344,7 +448,6 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
 
               {/* Scrollable Tab Content Frame */}
               <div className="flex-1 overflow-y-auto p-5 space-y-5 min-h-0">
-                
                 {activeTab === "notes" ? (
                   /* Clinical Note Editors */
                   <div className="space-y-4">
@@ -353,8 +456,13 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
                         <FileText className="h-3.5 w-3.5 text-slate-400" /> Triage Reason & Symptoms
                       </label>
                       <div className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-xl text-xs space-y-1.5">
-                        <p><span className="font-semibold text-slate-400">Declared Reason:</span> {appointment.reason}</p>
-                        <p><span className="font-semibold text-slate-400">AI triage symptoms:</span> <span className="italic text-slate-600 dark:text-slate-300">{appointment.symptoms}</span></p>
+                        <p>
+                          <span className="font-semibold text-slate-400">Declared Reason:</span> {appointment.reason}
+                        </p>
+                        <p>
+                          <span className="font-semibold text-slate-400">AI triage symptoms:</span>{" "}
+                          <span className="italic text-slate-600 dark:text-slate-300">{appointment.symptoms}</span>
+                        </p>
                       </div>
                     </div>
 
@@ -371,15 +479,29 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-450">
-                        Prescription (Optional)
-                      </label>
+                      <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-450">Prescription (Optional)</label>
                       <textarea
                         value={prescription}
                         onChange={(e) => setPrescription(e.target.value)}
+                        onKeyDown={handlePrescriptionKeyDown}
                         placeholder="E.g. Amoxicillin 500mg - 3 times daily for 7 days&#10;Paracetamol 500mg - every 6 hours as needed for pain..."
                         className="w-full h-28 p-3 bg-slate-50 dark:bg-slate-950 border border-slate-250 dark:border-slate-800 focus:border-teal-500/80 focus:ring-1 focus:ring-teal-500/20 rounded-xl text-xs outline-none transition resize-none font-mono leading-relaxed"
                       />
+                      <div className="min-h-12 rounded-xl border border-dashed border-teal-500/20 bg-teal-500/[0.03] p-3 text-[10px] leading-relaxed">
+                        {prescriptionCompletion ? (
+                          <div className="flex items-start gap-2">
+                            <Pill className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-600 dark:text-teal-400" />
+                            <div className="min-w-0">
+                              <p className="font-extrabold uppercase tracking-wider text-teal-700 dark:text-teal-350">
+                                Press Tab to complete {prescriptionCompletion.name}
+                              </p>
+                              <p className="mt-1 line-clamp-2 font-mono text-slate-600 dark:text-slate-300">{prescriptionCompletion.sig}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-slate-400">Type at least 2 letters of a common medication, then press Tab when a completion appears.</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -407,8 +529,10 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
 
                     {/* Past Consultation Timeline inside Session Chart */}
                     <div className="space-y-2">
-                      <span className="block text-xs font-extrabold uppercase tracking-wider text-slate-455">Previous Consultations ({appointment.patient.pastAppointments?.length || 0})</span>
-                      {(!appointment.patient.pastAppointments || appointment.patient.pastAppointments.length === 0) ? (
+                      <span className="block text-xs font-extrabold uppercase tracking-wider text-slate-455">
+                        Previous Consultations ({appointment.patient.pastAppointments?.length || 0})
+                      </span>
+                      {!appointment.patient.pastAppointments || appointment.patient.pastAppointments.length === 0 ? (
                         <div className="p-3 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-[10px] text-slate-400">
                           No previous completed consults on file.
                         </div>
@@ -419,10 +543,10 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
                               month: "short",
                               day: "numeric",
                               year: "numeric",
-                              timeZone: "UTC"
+                              timeZone: "UTC",
                             });
                             return (
-                              <div 
+                              <div
                                 key={appt.id}
                                 onClick={() => setSelectedPastAppt(appt)}
                                 className="p-2.5 rounded-xl border border-slate-100 dark:border-slate-850 bg-slate-50 dark:bg-slate-950/40 hover:border-teal-500/20 hover:bg-white dark:hover:bg-slate-900 cursor-pointer transition text-[11px]"
@@ -449,7 +573,6 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
                     </div>
                   </div>
                 )}
-
               </div>
 
               {/* Sticky bottom Action deck */}
@@ -465,13 +588,10 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
                       <Activity className="h-4 w-4 animate-spin" /> Finalizing Consultation Chart...
                     </>
                   ) : (
-                    <>
-                      Complete & Log Consultation
-                    </>
+                    <>Complete & Log Consultation</>
                   )}
                 </button>
               </div>
-
             </div>
           </div>
         )}
@@ -484,11 +604,10 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-slate-200 dark:border-slate-800 pb-3 shrink-0">
               <div>
-                <h3 className="font-extrabold text-sm text-slate-800 dark:text-slate-100">
-                  Historical Consultation Details
-                </h3>
+                <h3 className="font-extrabold text-sm text-slate-800 dark:text-slate-100">Historical Consultation Details</h3>
                 <p className="text-[10px] text-slate-400 mt-0.5">
-                  Dr. {selectedPastAppt.doctorName} &bull; {new Date(selectedPastAppt.date).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" })}
+                  Dr. {selectedPastAppt.doctorName} &bull;{" "}
+                  {new Date(selectedPastAppt.date).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" })}
                 </p>
               </div>
               <button

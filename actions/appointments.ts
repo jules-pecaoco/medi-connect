@@ -6,7 +6,7 @@ import { triggerNotification } from "@/lib/pusher";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createDailyRoom } from "@/lib/daily";
-import { combineScheduleDateAndTime } from "@/lib/date-utils";
+import { combineScheduleDateAndTime, isScheduleSlotInFuture } from "@/lib/date-utils";
 
 const createBookingSchema = z.object({
   slotId: z.string().min(1, "Time slot is required"),
@@ -56,6 +56,10 @@ export async function createAppointment(raw: unknown) {
 
       if (slot.status !== "AVAILABLE") {
         throw new Error("This time slot has already been booked by another patient.");
+      }
+
+      if (!isScheduleSlotInFuture(slot.date, slot.startTime)) {
+        throw new Error("This time slot has already passed. Please choose a future appointment time.");
       }
 
       // 2. Mark slot as BOOKED
@@ -249,6 +253,10 @@ export async function rescheduleAppointment(appointmentId: string, newSlotId: st
 
       if (newSlot.status !== "AVAILABLE") {
         throw new Error("The selected slot is already booked.");
+      }
+
+      if (!isScheduleSlotInFuture(newSlot.date, newSlot.startTime)) {
+        throw new Error("This time slot has already passed. Please choose a future appointment time.");
       }
 
       // 2. Set old slot to AVAILABLE

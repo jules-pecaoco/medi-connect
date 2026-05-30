@@ -72,7 +72,7 @@ export default async function Home() {
         <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight max-w-4xl leading-tight mb-6">
           Premium Telehealth,{" "}
           <span className="bg-gradient-to-r from-teal-600 via-teal-500 to-emerald-500 bg-clip-text text-transparent">
-            Powered by Claude AI
+            Powered by Gemini
           </span>
         </h1>
 
@@ -94,7 +94,7 @@ export default async function Home() {
               I am a Patient
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-              Describe symptoms to Claude AI, discover certified specialists, and consult securely via live video.
+              Describe symptoms to Gemini discover certified specialists, and consult securely via live video.
             </p>
           </Link>
 

@@ -5,17 +5,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/toast";
 import { createAppointment } from "@/actions/appointments";
+import { isScheduleSlotInFuture } from "@/lib/date-utils";
 import { 
   ArrowLeft, 
   Star, 
-  Briefcase, 
-  DollarSign, 
   Calendar, 
   Clock, 
   Award, 
   ShieldCheck, 
   CalendarCheck,
-  CheckCircle,
   FileText,
   AlertCircle,
   Activity,
@@ -50,10 +48,12 @@ interface DoctorDetailClientProps {
 }
 
 export default function DoctorDetailClient({ doctor, slots }: DoctorDetailClientProps) {
+  const bookableSlots = slots.filter((slot) => isScheduleSlotInFuture(slot.date, slot.startTime));
+
   // Group slots by date string
   const slotsByDate: { [dateStr: string]: TimeSlot[] } = {};
   
-  slots.forEach((slot) => {
+  bookableSlots.forEach((slot) => {
     // Database dates are midnight UTC, let's normalize to standard format
     const d = new Date(slot.date);
     const dateStr = d.toLocaleDateString("en-US", {
@@ -85,7 +85,7 @@ export default function DoctorDetailClient({ doctor, slots }: DoctorDetailClient
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const selectedSlots = selectedDate ? slotsByDate[selectedDate] : [];
-  const selectedSlotDetails = slots.find((s) => s.id === selectedSlotId);
+  const selectedSlotDetails = bookableSlots.find((s) => s.id === selectedSlotId);
 
   const handleConfirmBooking = async (e: React.FormEvent) => {
     e.preventDefault();
