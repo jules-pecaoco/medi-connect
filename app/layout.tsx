@@ -13,7 +13,8 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   title: "MediConnect — Modern Telehealth & Video Consultations",
-  description: "Experience premium, instant healthcare consultation, Claude-driven symptom recommendations, and seamless secure telehealth consulting from anywhere.",
+  description:
+    "Experience premium, instant healthcare consultation, Gemini-driven symptom recommendations, and seamless secure telehealth consulting from anywhere.",
   keywords: ["telehealth", "doctor booking", "video consultation", "AI healthcare triage"],
 };
 
@@ -28,15 +29,8 @@ export default async function RootLayout({
     <html lang="en" className={`${outfit.variable} h-full scroll-smooth`}>
       <body className="min-h-full flex flex-col antialiased">
         <ToastProvider>
-          {session?.user?.id && (
-            <NotificationListener 
-              userId={session.user.id} 
-              role={session.user.role as "PATIENT" | "DOCTOR"} 
-            />
-          )}
-          <main className="flex-1 flex flex-col relative">
-            {children}
-          </main>
+          {session?.user?.id && <NotificationListener userId={session.user.id} role={session.user.role as "PATIENT" | "DOCTOR"} />}
+          <main className="flex-1 flex flex-col relative">{children}</main>
         </ToastProvider>
       </body>
     </html>
