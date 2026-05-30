@@ -47,19 +47,19 @@ Complete all required features before building extras.
 
 # Tech Stack (Latest Stable)
 
-| Layer                    | Choice                                            |
-| ------------------------ | ------------------------------------------------- |
-| Frontend                 | Latest stable Next.js App Router + TypeScript     |
-| UI                       | shadcn/ui + Tailwind CSS                          |
-| Backend                  | Next.js Route Handlers + Server Actions           |
-| Database                 | PostgreSQL via Neon                               |
-| ORM                      | Prisma ORM                                        |
-| Authentication           | Auth.js (NextAuth v5 stable)                      |
-| Real-time Notifications  | Pusher Channels                                   |
-| AI Recommendation Engine | Gemini (latest stable Sonnet model) |
-| Video Consultation       | Daily.co                                          |
-| File Storage             | Vercel Blob                                       |
-| Deployment               | Vercel                                            |
+| Layer                    | Choice                                        |
+| ------------------------ | --------------------------------------------- |
+| Frontend                 | Latest stable Next.js App Router + TypeScript |
+| UI                       | shadcn/ui + Tailwind CSS                      |
+| Backend                  | Next.js Route Handlers + Server Actions       |
+| Database                 | PostgreSQL via Neon                           |
+| ORM                      | Prisma ORM                                    |
+| Authentication           | Auth.js (NextAuth v5 stable)                  |
+| Real-time Notifications  | Pusher Channels                               |
+| AI Recommendation Engine | Gemini (latest stable Sonnet model)           |
+| Video Consultation       | Daily.co                                      |
+| File Storage             | Vercel Blob                                   |
+| Deployment               | Vercel                                        |
 
 ---
 
@@ -404,7 +404,7 @@ Only proceed after current phase is manually verified working.
 - [x] Patient medical records
 - [ ] Public deployment
 - [ ] Public Git repository
-- [ ] Clear README
+- [x] Clear README
 
 ---
 
@@ -537,8 +537,20 @@ STATUS: Completed
 ### Phase 6
 
 - [x] Consultation notes
-- [x] Prescription autocomplete with Tab completion
+- [x] Prescription handling
 - [x] Patient records
+
+---
+
+## Changes Made Outside MVP Scope
+
+These are deliberate product/UX improvements added after the required MVP medical-records scope was already completed. They extend the experience but should be described as enhancements, not core MVP requirements.
+
+- Doctor prescription Tab autocomplete during live consultation:
+  - Added local medication templates for common prescriptions.
+  - Doctors can type at least 2 letters in the prescription textarea and press `Tab` to expand the current line into a full dosage/SIG instruction.
+  - Prescriptions remain editable plain text on the appointment record, so no database migration or new API surface was introduced.
+  - Implemented in `app/(doctor)/doctor/appointments/[id]/session/DoctorSessionClient.tsx`.
 
 ---
 
@@ -559,6 +571,7 @@ STATUS: Completed
 - Multi-client subscription model for patient-{id} and doctor-{id} real-time Pusher listener channels.
 - Global light-mode enforcement by disabling Tailwind's media-query dark mode via `@custom-variant dark (&:not(*))`.
 - Doctor consultation prescriptions use local, client-side medication templates with Tab completion; prescriptions remain stored as editable plain text on the appointment record.
+- Patient booking and rescheduling now enforce future-only appointment slots at both availability-fetch and mutation layers.
 
 ---
 
@@ -574,6 +587,10 @@ Completed doctor prescription Tab autocomplete during live consultation.
 
 Fixed patient booking/rescheduling so appointments can only be made for future slot start times. Same-day slots whose start time has already passed are filtered out of patient availability and rejected by server-side booking mutations.
 
+Added a dedicated "Changes Made Outside MVP Scope" section to distinguish extra enhancements from required MVP checklist items.
+
+Replaced the default Next.js README with a submission-ready project README covering product overview, feature list, tech stack, setup, environment variables, database commands, scripts, deployment, and implementation notes.
+
 Modified files:
 
 - `actions/appointments.ts`
@@ -582,6 +599,7 @@ Modified files:
 - `app/(doctor)/doctor/appointments/[id]/session/DoctorSessionClient.tsx`
 - `AGENT_CONTEXT.md`
 - `lib/date-utils.ts`
+- `README.md`
 
 Verification:
 
@@ -674,9 +692,9 @@ Verification:
 
 ## Repo & Deploy
 
-Repo URL: [https://github.com/jules-pecaoco/medi-connect](https://github.com/jules-pecaoco/medi-connect)
+Repo URL: https://github.com/jules-pecaoco/medi-connect
 
-Deployed URL: [fill in]
+Deployed URL: https://medi-connect-jade.vercel.app/
 
 ---
 
