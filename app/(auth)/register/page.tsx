@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { registerUser } from "@/actions/auth";
-import { Activity, ShieldAlert, CheckCircle, Loader2 } from "lucide-react";
+import { Activity, CheckCircle, HeartPulse, Loader2, ShieldAlert } from "lucide-react";
 
 function RegisterForm() {
   const router = useRouter();
@@ -51,155 +51,102 @@ function RegisterForm() {
   };
 
   return (
-    <div className="w-full max-w-md glass-card rounded-2xl p-8 z-10 animate-fade-in">
-        {/* Brand logo */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="p-3 bg-teal-600 rounded-xl text-white shadow-lg shadow-teal-600/20 mb-3">
-            <Activity className="h-6 w-6" />
-          </div>
-          <span className="font-extrabold text-2xl bg-gradient-to-r from-teal-600 to-emerald-500 bg-clip-text text-transparent">
-            Create Account
-          </span>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5">
-            Join MediConnect telehealth platform
-          </p>
+    <div className="w-full max-w-md clinical-card p-8 md:p-10 animate-fade-in">
+      <div className="mb-8 flex flex-col items-center text-center">
+        <div className="mb-3 rounded-2xl bg-teal-700 p-3 text-white shadow-clinical">
+          <Activity className="h-6 w-6" />
         </div>
-
-        {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-sm flex items-start gap-2">
-            <ShieldAlert className="h-5 w-5 shrink-0 mt-0.5" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm flex items-start gap-2">
-            <CheckCircle className="h-5 w-5 shrink-0 mt-0.5" />
-            <span>Registration successful! Opening your workspace...</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Role selector switches */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
-              Select Your Role
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setRole("PATIENT")}
-                className={`py-3 rounded-xl border text-sm font-semibold transition duration-200 cursor-pointer ${
-                  role === "PATIENT"
-                    ? "bg-teal-500/10 border-teal-500 text-teal-600 dark:text-teal-400"
-                    : "border-slate-200 dark:border-slate-800 bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900/50"
-                }`}
-              >
-                I am a Patient
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole("DOCTOR")}
-                className={`py-3 rounded-xl border text-sm font-semibold transition duration-200 cursor-pointer ${
-                  role === "DOCTOR"
-                    ? "bg-teal-500/10 border-teal-500 text-teal-600 dark:text-teal-400"
-                    : "border-slate-200 dark:border-slate-800 bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900/50"
-                }`}
-              >
-                I am a Doctor
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="name" className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
-              Full Name
-            </label>
-            <input
-              id="name"
-              type="text"
-              required
-              disabled={isLoading || success}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Dr. John Doe or Jane Smith"
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-950 text-sm input-glow transition placeholder:text-slate-400"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="email" className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
-              Email Address
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              disabled={isLoading || success}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-950 text-sm input-glow transition placeholder:text-slate-400"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              disabled={isLoading || success}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-950 text-sm input-glow transition placeholder:text-slate-400"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading || success}
-            className="w-full py-3.5 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:bg-slate-300 dark:disabled:bg-slate-800 text-white font-semibold rounded-xl text-sm transition shadow-lg shadow-teal-600/10 hover:shadow-teal-700/20 active:shadow-none flex items-center justify-center gap-2 cursor-pointer"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Creating Account...
-              </>
-            ) : (
-              "Sign Up"
-            )}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">
-          Already have an account?{" "}
-          <Link
-            href={`/login?role=${role}`}
-            className="text-teal-600 dark:text-teal-400 font-semibold hover:underline"
-          >
-            Sign In
-          </Link>
-        </div>
+        <span className="font-display text-3xl text-teal-950">Create Account</span>
+        <p className="mt-1.5 text-sm text-slate-500">Join the MediConnect telehealth platform</p>
       </div>
+
+      {error && (
+        <div className="mb-6 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {success && (
+        <div className="mb-6 flex items-start gap-2 rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm text-teal-800">
+          <CheckCircle className="mt-0.5 h-5 w-5 shrink-0" />
+          <span>Registration successful! Opening your workspace...</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">Select Your Role</label>
+          <div className="grid grid-cols-2 gap-3">
+            {(["PATIENT", "DOCTOR"] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setRole(option)}
+                className={`rounded-xl border py-3 text-sm font-semibold transition duration-200 ${
+                  role === option ? "border-teal-700 bg-teal-50 text-teal-800" : "border-slate-200 bg-white text-slate-500 hover:bg-warm-100"
+                }`}
+              >
+                {option === "PATIENT" ? "I am a Patient" : "I am a Doctor"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="name" className="mb-1.5 block text-xs font-semibold text-slate-500">Full Name</label>
+          <input id="name" type="text" required disabled={isLoading || success} value={name} onChange={(e) => setName(e.target.value)} placeholder="Dr. John Doe or Jane Smith" className="input-glow w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm transition placeholder:text-slate-400" />
+        </div>
+
+        <div>
+          <label htmlFor="email" className="mb-1.5 block text-xs font-semibold text-slate-500">Email Address</label>
+          <input id="email" type="email" required disabled={isLoading || success} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="input-glow w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm transition placeholder:text-slate-400" />
+        </div>
+
+        <div>
+          <label htmlFor="password" className="mb-1.5 block text-xs font-semibold text-slate-500">Password</label>
+          <input id="password" type="password" required disabled={isLoading || success} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="input-glow w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm transition placeholder:text-slate-400" />
+        </div>
+
+        <button type="submit" disabled={isLoading || success} className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-700 py-3.5 text-sm font-semibold text-white shadow-clinical transition hover:bg-teal-800 active:bg-teal-900 disabled:bg-slate-300">
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" /> Saving...
+            </>
+          ) : (
+            "Sign Up"
+          )}
+        </button>
+      </form>
+
+      <div className="mt-6 text-center text-xs text-slate-500">
+        Already have an account?{" "}
+        <Link href={`/login?role=${role}`} className="font-semibold text-teal-700 hover:underline">
+          Sign In
+        </Link>
+      </div>
+    </div>
   );
 }
 
 export default function Register() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#080d16] px-4 py-12 relative overflow-hidden">
-      {/* Glow effect */}
-      <div className="glow-bg top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-30" />
-      <Suspense fallback={
-        <div className="w-full max-w-md glass-card rounded-2xl p-8 z-10 flex flex-col items-center justify-center py-20 text-slate-400">
-          <Loader2 className="h-8 w-8 animate-spin text-teal-600 mb-3" />
-          <span>Loading registration...</span>
+    <div className="grid min-h-screen bg-warm-100 lg:grid-cols-2">
+      <section className="medical-illustration relative hidden flex-col justify-end overflow-hidden p-12 lg:flex">
+        <div className="relative z-10 max-w-md">
+          <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-teal-700 shadow-clinical">
+            <HeartPulse className="h-6 w-6" />
+          </div>
+          <h2 className="font-display text-5xl leading-tight text-teal-950">Start with care that knows your context.</h2>
+          <p className="mt-4 text-sm leading-6 text-slate-600">Create a patient or physician workspace built around appointments, records, and secure video visits.</p>
         </div>
-      }>
-        <RegisterForm />
-      </Suspense>
+      </section>
+
+      <section className="flex items-center justify-center px-4 py-12">
+        <Suspense fallback={<div className="clinical-card flex w-full max-w-md flex-col items-center justify-center p-8 py-20 text-slate-400"><Loader2 className="mb-3 h-8 w-8 animate-spin text-teal-700" /><span>Loading registration...</span></div>}>
+          <RegisterForm />
+        </Suspense>
+      </section>
     </div>
   );
 }

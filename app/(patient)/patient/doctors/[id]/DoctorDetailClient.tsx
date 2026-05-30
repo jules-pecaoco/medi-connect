@@ -270,17 +270,18 @@ export default function DoctorDetailClient({ doctor, slots }: DoctorDetailClient
                   </h3>
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {selectedSlots.map((slot) => {
+                    {selectedSlots.map((slot, index) => {
                       const isSelected = slot.id === selectedSlotId;
                       return (
                         <button
                           key={slot.id}
                           onClick={() => setSelectedSlotId(slot.id)}
+                          style={{ animationDelay: `${Math.min(index, 5) * 40}ms` }}
                           className={`p-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
                             isSelected
                               ? "bg-teal-600/10 text-teal-600 dark:text-teal-400 border-teal-500"
                               : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800/80 text-slate-700 dark:text-slate-300 hover:border-teal-500/20"
-                          }`}
+                          } animate-slide-up`}
                         >
                           <Clock className="h-3.5 w-3.5 text-slate-400" />
                           {slot.startTime} &ndash; {slot.endTime}
@@ -317,7 +318,7 @@ export default function DoctorDetailClient({ doctor, slots }: DoctorDetailClient
                 {/* Real Booking Modal Overlay */}
                 {isBookingModalOpen && selectedSlotDetails && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-6 md:p-8 shadow-2xl relative animate-scale-in">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-6 md:p-8 shadow-2xl relative animate-scale-in data-[state=open]:animate-scale-in">
                       <button
                         onClick={() => setIsBookingModalOpen(false)}
                         className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"

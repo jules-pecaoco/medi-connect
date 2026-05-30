@@ -4,35 +4,50 @@
 @custom-variant dark (&:not(*));
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #f7f3ea;
+  --foreground: #172033;
   
-  --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card: #fffdf8;
+  --card-foreground: #172033;
   
-  --popover: #ffffff;
-  --popover-foreground: #0f172a;
+  --popover: #fffdf8;
+  --popover-foreground: #172033;
   
-  --primary: #0d9488;
+  --primary: #0f766e;
   --primary-foreground: #ffffff;
   
-  --secondary: #0f766e;
-  --secondary-foreground: #ffffff;
+  --secondary: #e6f2ec;
+  --secondary-foreground: #134e4a;
   
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
+  --muted: #f1eee6;
+  --muted-foreground: #596579;
   
-  --accent: #f1f5f9;
-  --accent-foreground: #0f172a;
+  --accent: #dfece3;
+  --accent-foreground: #134e4a;
   
-  --destructive: #ef4444;
+  --destructive: #dc2626;
   --destructive-foreground: #ffffff;
   
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #14b8a6;
+  --border: #ddd8cd;
+  --input: #d8d2c5;
+  --ring: #0f766e;
   
-  --radius: 0.75rem;
+  --radius: 0.625rem;
+  --radius-card: 1rem;
+  --radius-pill: 999px;
+  --surface-warm: #fffaf0;
+  --surface-sage: #e7efe7;
+  --surface-teal: #ecfdf5;
+  --success: #0f766e;
+  --warning: #b45309;
+  --error: #dc2626;
+  --shadow-soft: 0 14px 40px rgba(15, 23, 42, 0.08);
+  --motion-fast: 120ms;
+  --motion-normal: 200ms;
+  --motion-slow: 300ms;
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @theme inline {
@@ -55,6 +70,16 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-warm-50: #fffdf8;
+  --color-warm-100: #f7f3ea;
+  --color-warm-200: #ede6d8;
+  --color-sage-50: #f3f8f2;
+  --color-sage-100: #e7efe7;
+  --color-sage-200: #cfe0d1;
+  --color-teal-50: #ecfdf5;
+  --color-teal-100: #ccfbf1;
+  --color-teal-700: #0f766e;
+  --color-teal-800: #115e59;
   --color-teal-350: #2dd4bf;
   --color-teal-450: #14b8a6;
   --color-teal-550: #0d9488;
@@ -73,12 +98,23 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+  --radius-card: var(--radius-card);
+  --radius-pill: var(--radius-pill);
+  --shadow-clinical: var(--shadow-soft);
   
-  --font-sans: 'Outfit', 'Inter', sans-serif;
+  --font-sans: var(--font-sans), "DM Sans", "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-display: var(--font-display), "DM Serif Display", "Lora", Georgia, serif;
+  --font-mono: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
 }
 
+@layer base {
 * {
   border-color: var(--border);
+}
+
+html {
+  color-scheme: light;
+  background: var(--background);
 }
 
 body {
@@ -89,31 +125,172 @@ body {
   min-height: 100vh;
 }
 
-/* Glassmorphism Styles */
+h1,
+h2,
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  min-height: 44px;
+}
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: #99f6e4;
+  color: #134e4a;
+}
+}
+
+/* Clinical warmth system utilities */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 253, 248, 0.88);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(221, 216, 205, 0.85);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 253, 248, 0.94);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 8px 32px 0 rgba(13, 148, 136, 0.04);
+  border: 1px solid rgba(221, 216, 205, 0.9);
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform var(--motion-normal) var(--ease-out),
+    border-color var(--motion-normal) var(--ease-out),
+    box-shadow var(--motion-normal) var(--ease-out);
 }
 
-/* Custom interactive ring */
-.input-glow:focus {
+.glass-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(15, 118, 110, 0.3);
+  box-shadow: 0 4px 16px rgba(15, 118, 110, 0.08);
+}
+
+.input-glow:focus,
+.input-glow:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.25);
+  box-shadow: 0 0 0 2px #fffdf8, 0 0 0 4px rgba(15, 118, 110, 0.35);
   border-color: var(--primary);
 }
 
-/* Smooth micro-animations */
+.input-glow {
+  transition:
+    border-color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.clinical-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform var(--motion-normal) var(--ease-out),
+    border-color var(--motion-normal) var(--ease-out),
+    box-shadow var(--motion-normal) var(--ease-out);
+}
+
+.clinical-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(15, 118, 110, 0.3);
+  box-shadow: 0 4px 16px rgba(15, 118, 110, 0.08);
+}
+
+.status-confirmed {
+  background: #ccfbf1;
+  color: #115e59;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-cancelled,
+.status-error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.medical-illustration {
+  background:
+    radial-gradient(circle at 22% 22%, rgba(15, 118, 110, 0.16), transparent 28%),
+    linear-gradient(135deg, #fffdf8 0%, #e7efe7 52%, #ccfbf1 100%);
+}
+
+.medical-illustration::before {
+  content: "";
+  position: absolute;
+  inset: 12%;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  border-radius: 32px;
+}
+
+.medical-illustration::after {
+  content: "+";
+  position: absolute;
+  right: 18%;
+  top: 18%;
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  border-radius: 24px;
+  background: #0f766e;
+  color: white;
+  font: 700 46px/1 var(--font-sans);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Purposeful motion layer */
 @keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes skeleton {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+@keyframes bounce-dot {
+  0%, 100% { transform: scale(0.6); opacity: 0.4; }
+  50% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 @keyframes pulseGlow {
@@ -122,7 +299,52 @@ body {
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn var(--motion-normal) var(--ease-out) both;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.2s ease-in-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn var(--motion-fast) var(--ease-spring) both;
+}
+
+.animate-slide-up {
+  animation: slideUp var(--motion-normal) var(--ease-out) both;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight var(--motion-normal) var(--ease-out) both;
+}
+
+.animate-skeleton {
+  animation: skeleton 1.5s ease-in-out infinite;
+}
+
+.animate-shake {
+  animation: shake var(--motion-normal) var(--ease-in-out);
+}
+
+.typing-dot {
+  animation: bounce-dot 400ms var(--ease-in-out) infinite;
+}
+
+.status-dot-confirmed {
+  animation: statusPulse 2s var(--ease-in-out) infinite;
+}
+
+.arrow-link {
+  transition: gap var(--motion-fast) var(--ease-out);
+}
+
+.arrow-link:hover {
+  gap: 0.625rem;
 }
 
 .glow-bg {
@@ -134,4 +356,31 @@ body {
   pointer-events: none;
   z-index: 0;
   animation: pulseGlow 8s ease-in-out infinite;
+}
+
+@media print {
+  body {
+    background: #ffffff;
+  }
+
+  header,
+  nav,
+  .no-print {
+    display: none !important;
+  }
+
+  .glass-card,
+  .clinical-card {
+    box-shadow: none !important;
+    border-color: #cbd5e1 !important;
+    background: #ffffff !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

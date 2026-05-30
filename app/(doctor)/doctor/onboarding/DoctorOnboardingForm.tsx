@@ -75,18 +75,33 @@ export default function DoctorOnboardingForm({ user }: DoctorOnboardingFormProps
     "Gphthalmology",
   ];
 
+  const steps = ["Specialty", "License", "Practice", "Bio"];
+
   return (
-    <div className="glass-card rounded-2xl p-8 md:p-10 border border-slate-200/60 dark:border-slate-800/80 shadow-xl shadow-teal-600/5">
-      {/* Header banner */}
+    <div className="clinical-card p-8 md:p-10">
       <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-200 dark:border-slate-800/60">
         <div className="p-3 bg-teal-500/10 rounded-xl text-teal-600 dark:text-teal-400">
           <Stethoscope className="h-6 w-6" />
         </div>
         <div>
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight">Physician Onboarding</h1>
+          <h1 className="font-display text-2xl md:text-3xl tracking-tight text-teal-950">Physician Onboarding</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             Welcome, <span className="font-semibold text-slate-700 dark:text-slate-300">{user.name || "Doctor"}</span>. Configure your consulting profile to begin seeing patients.
           </p>
+        </div>
+      </div>
+
+      <div className="mb-8">
+        <div className="mb-3 h-2 overflow-hidden rounded-full bg-sage-100">
+          <div className="h-full w-full rounded-full bg-teal-700" />
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          {steps.map((step, index) => (
+            <div key={step} className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-teal-800">
+              <span className="grid h-6 w-6 place-items-center rounded-full bg-teal-700 text-white">{index + 1}</span>
+              <span className="hidden sm:inline">{step}</span>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -106,6 +121,8 @@ export default function DoctorOnboardingForm({ user }: DoctorOnboardingFormProps
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Core details */}
+        <section className="rounded-2xl border border-sage-200 bg-warm-50 p-5">
+        <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-teal-700">Credential Basics</h3>
         <div className="grid md:grid-cols-2 gap-5">
           <div>
             <label htmlFor="specialization" className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
@@ -142,7 +159,10 @@ export default function DoctorOnboardingForm({ user }: DoctorOnboardingFormProps
             />
           </div>
         </div>
+        </section>
 
+        <section className="rounded-2xl border border-sage-200 bg-warm-50 p-5">
+        <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-teal-700">Practice Details</h3>
         <div className="grid md:grid-cols-2 gap-5">
           <div>
             <label htmlFor="experience" className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
@@ -184,9 +204,10 @@ export default function DoctorOnboardingForm({ user }: DoctorOnboardingFormProps
             </div>
           </div>
         </div>
+        </section>
 
         {/* Bio */}
-        <div>
+        <section className="rounded-2xl border border-sage-200 bg-warm-50 p-5">
           <label htmlFor="bio" className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
             Professional Biography
           </label>
@@ -200,7 +221,7 @@ export default function DoctorOnboardingForm({ user }: DoctorOnboardingFormProps
             placeholder="Introduce yourself to patients. Detail your clinical interests, educational background, certifications, and approach to digital healthcare..."
             className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-950 text-sm input-glow transition resize-none"
           />
-        </div>
+        </section>
 
         <button
           type="submit"
@@ -209,7 +230,7 @@ export default function DoctorOnboardingForm({ user }: DoctorOnboardingFormProps
         >
           {isLoading ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" /> Publishing Profile...
+              <Loader2 className="h-4 w-4 animate-spin" /> Saving...
             </>
           ) : (
             <>

@@ -194,6 +194,25 @@ export default function SymptomsClient() {
               </div>
             </div>
           )}
+
+          {isLoading && (
+            <div className="clinical-card space-y-4 p-6 animate-fade-in">
+              <div className="flex items-center gap-3 text-sm font-bold text-teal-800">
+                <div className="flex items-center gap-1.5" aria-hidden="true">
+                  <span className="h-2 w-2 rounded-full bg-teal-700 typing-dot" />
+                  <span className="h-2 w-2 rounded-full bg-teal-700 typing-dot [animation-delay:150ms]" />
+                  <span className="h-2 w-2 rounded-full bg-teal-700 typing-dot [animation-delay:300ms]" />
+                </div>
+                Reading symptom pattern
+              </div>
+              <div className="h-3 w-4/5 animate-skeleton rounded-full bg-sage-200" />
+              <div className="h-3 w-3/5 animate-skeleton rounded-full bg-sage-200" />
+              <div className="flex gap-2 pt-2">
+                <span className="h-8 w-24 animate-skeleton rounded-full bg-teal-100" />
+                <span className="h-8 w-20 animate-skeleton rounded-full bg-teal-100" />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
