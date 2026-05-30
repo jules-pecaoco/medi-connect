@@ -115,11 +115,30 @@ NEXT_PUBLIC_ALLOW_EARLY_CONSULT_JOIN=true
 
 Pusher toasts are delivered on **every authenticated route** (dashboard tabs, doctor listing, records, session pages, etc.) via the root layout `NotificationListener`. The sidebar does not control subscriptions.
 
-1. Set all four Pusher variables locally and on Vercel (`PUSHER_APP_ID`, `PUSHER_SECRET`, `NEXT_PUBLIC_PUSHER_KEY`, `NEXT_PUBLIC_PUSHER_CLUSTER`). Client keys must be present at **build** time on Vercel.
-2. Open two browsers (e.g. normal window = patient, incognito = doctor) and log in as different roles.
-3. Keep both tabs inside the app on any page (not `/login`).
-4. Book, cancel, or reschedule from one side; the other should show a bottom-right toast and refresh data.
-5. In DevTools console, confirm: `[Pusher Client] Subscribed to channel: patient-…` or `doctor-…`.
+**Local**
+
+1. Set all four Pusher variables in `.env.local`.
+2. Open two browsers (e.g. Chrome = patient, Firefox incognito = doctor) and log in as different roles.
+3. Book, cancel, or reschedule from one side; the other should show a bottom-right toast.
+4. Console should show: `[Pusher Client] Subscribed to channel: patient-…` or `doctor-…`.
+
+**Production (Vercel)**
+
+1. In Vercel → Project → Settings → Environment Variables, set all four vars for **Production** (not Preview-only):
+   `PUSHER_APP_ID`, `PUSHER_SECRET`, `NEXT_PUBLIC_PUSHER_KEY`, `NEXT_PUBLIC_PUSHER_CLUSTER`.
+2. **Redeploy** production after any env change (use **Clear build cache** if vars were added recently).
+3. On the live site, open DevTools → Console while logged in:
+   - Good: `[Pusher Client] Subscribed to channel: …`
+   - Bad: `Missing key or cluster from server config` → Production env not set or deployment needs redeploy.
+4. Book on production; in Vercel → Logs search for `[Pusher success]` or `[Pusher] Server credentials missing`.
+
+The app passes Pusher key/cluster from the **server layout** at request time (not only from the client bundle), so production works once Vercel runtime env is correct.
+
+| Test | Expected |
+|------|----------|
+| Local + Local | Toasts on both |
+| Local + Live | Live tab still toasts when booking on localhost (live client subscribed) |
+| Live + Live | Toasts on both; Vercel logs show `[Pusher success]` |
 
 Events: `appointment.booked`, `appointment.cancelled`, `appointment.updated`, `appointment.completed`.
 
