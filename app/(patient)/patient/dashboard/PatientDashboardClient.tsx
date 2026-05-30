@@ -162,7 +162,7 @@ export default function PatientDashboardClient({
   const pastAppointments = appointments.filter(a => a.status === "COMPLETED" || a.status === "CANCELLED");
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
       {/* Top Header */}
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800/80 mb-8">
         <div className="flex items-center gap-3">
@@ -272,14 +272,14 @@ export default function PatientDashboardClient({
             {/* Doctor Scheduling */}
             <div className="group p-6 rounded-2xl border border-teal-500/10 bg-white dark:bg-slate-900/50 hover:border-teal-500/40 hover:shadow-xl hover:shadow-teal-500/5 transition duration-300">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl group-hover:scale-110 transition duration-300">
+                <div className="p-3 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl group-hover:scale-110 transition duration-300">
                   <Calendar className="h-5 w-5" />
                 </div>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-teal-500/10 text-teal-600 dark:text-teal-400">
                   Booking
                 </span>
               </div>
-              <h3 className="font-bold text-base mb-1.5 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">
+              <h3 className="font-bold text-base mb-1.5 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition">
                 Find & Schedule Doctor
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
@@ -287,7 +287,7 @@ export default function PatientDashboardClient({
               </p>
               <Link
                 href="/patient/doctors"
-                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold transition cursor-pointer shadow-sm shadow-emerald-600/15"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white text-xs font-bold transition cursor-pointer shadow-sm shadow-teal-600/15"
               >
                 Find Doctors <Calendar className="h-3.5 w-3.5" />
               </Link>
@@ -322,7 +322,7 @@ export default function PatientDashboardClient({
               </div>
             ) : (
               <div className="space-y-4">
-                {activeAppointments.map((appt) => {
+                {activeAppointments.map((appt, index) => {
                   const dateStr = new Date(appt.timeSlot.date).toLocaleDateString("en-US", {
                     weekday: "short",
                     month: "short",
@@ -332,14 +332,16 @@ export default function PatientDashboardClient({
                   return (
                     <div 
                       key={appt.id} 
-                      className="p-4 rounded-xl border border-slate-100 dark:border-slate-850 bg-white dark:bg-slate-900/40 hover:border-teal-500/20 transition duration-300 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                      style={{ animationDelay: `${Math.min(index, 5) * 40}ms` }}
+                      className="p-4 rounded-xl border border-slate-100 dark:border-slate-850 bg-white dark:bg-slate-900/40 transition-[transform,border-color,box-shadow] duration-[var(--motion-normal)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-teal-500/30 hover:shadow-[0_4px_16px_rgba(15,118,110,0.08)] flex flex-col md:flex-row md:items-center justify-between gap-4 animate-slide-up"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <h4 className="font-bold text-sm text-slate-800 dark:text-slate-200">
                             Dr. {appt.doctor.user.name}
                           </h4>
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-teal-550/10 text-teal-600 dark:text-teal-400 uppercase tracking-wider">
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-teal-550/10 text-teal-600 dark:text-teal-400 uppercase tracking-wider inline-flex items-center gap-1.5">
+                            <span className="h-1.5 w-1.5 rounded-full bg-teal-600 status-dot-confirmed" />
                             {appt.doctor.specialization}
                           </span>
                         </div>
@@ -393,7 +395,7 @@ export default function PatientDashboardClient({
             <div className="glass-card rounded-2xl p-6 border border-slate-200/60 dark:border-slate-800/80 shadow-md">
               <h3 className="font-bold text-sm text-slate-400 uppercase tracking-wider mb-4">Past & Cancelled Consultations</h3>
               <div className="space-y-3">
-                {pastAppointments.map((appt) => {
+                {pastAppointments.map((appt, index) => {
                   const dateStr = new Date(appt.timeSlot.date).toLocaleDateString("en-US", {
                     month: "short",
                     day: "numeric",
@@ -401,7 +403,7 @@ export default function PatientDashboardClient({
                     timeZone: "UTC",
                   });
                   return (
-                    <div key={appt.id} className="flex justify-between items-center text-xs p-3 rounded-lg bg-slate-50 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800/40">
+                    <div key={appt.id} style={{ animationDelay: `${Math.min(index, 5) * 40}ms` }} className="flex justify-between items-center text-xs p-3 rounded-lg bg-slate-50 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800/40 transition-[transform,border-color,box-shadow] duration-[var(--motion-normal)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-teal-500/30 hover:shadow-[0_4px_16px_rgba(15,118,110,0.08)] animate-slide-up">
                       <div>
                         <p className="font-semibold">Dr. {appt.doctor.user.name}</p>
                         <p className="text-slate-450 text-[10px]">{dateStr} &bull; {appt.timeSlot.startTime}</p>
@@ -471,7 +473,7 @@ export default function PatientDashboardClient({
       {/* Reschedule Calendar Dialog Modal */}
       {reschedulingAppt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-6 shadow-2xl relative animate-scale-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-6 shadow-2xl relative animate-scale-in data-[state=open]:animate-scale-in">
             <button
               onClick={() => setReschedulingAppt(null)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"

@@ -29,6 +29,35 @@ const config: Config = {
       spacing: {
         touch: "44px",
       },
+      animation: {
+        "fade-in": "fadeIn var(--motion-normal) var(--ease-out) both",
+        "slide-up": "slideUp var(--motion-normal) var(--ease-out) both",
+        "slide-in-right": "slideInRight var(--motion-normal) var(--ease-out) both",
+        "scale-in": "scaleIn var(--motion-fast) var(--ease-spring) both",
+        skeleton: "skeleton 1.5s ease-in-out infinite",
+      },
+      keyframes: {
+        fadeIn: {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+        slideUp: {
+          from: { opacity: "0", transform: "translateY(8px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        slideInRight: {
+          from: { opacity: "0", transform: "translateX(12px)" },
+          to: { opacity: "1", transform: "translateX(0)" },
+        },
+        scaleIn: {
+          from: { opacity: "0", transform: "scale(0.95)" },
+          to: { opacity: "1", transform: "scale(1)" },
+        },
+        skeleton: {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.4" },
+        },
+      },
     },
   },
 };

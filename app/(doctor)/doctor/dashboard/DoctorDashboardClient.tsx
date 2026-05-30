@@ -103,7 +103,7 @@ export default function DoctorDashboardClient({
   const pastAppointments = appointments.filter(a => a.status === "COMPLETED" || a.status === "CANCELLED");
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
       {/* Top Header */}
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800/80 mb-8">
         <div className="flex items-center gap-3">
@@ -248,7 +248,7 @@ export default function DoctorDashboardClient({
               </div>
             ) : (
               <div className="space-y-4">
-                {activeAppointments.map((appt) => {
+                {activeAppointments.map((appt, index) => {
                   const dateStr = new Date(appt.timeSlot.date).toLocaleDateString("en-US", {
                     weekday: "short",
                     month: "short",
@@ -258,14 +258,16 @@ export default function DoctorDashboardClient({
                   return (
                     <div 
                       key={appt.id} 
-                      className="p-4 rounded-xl border border-slate-105 bg-white dark:bg-slate-900/40 hover:border-teal-500/20 transition duration-300 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                      style={{ animationDelay: `${Math.min(index, 5) * 40}ms` }}
+                      className="p-4 rounded-xl border border-slate-105 bg-white dark:bg-slate-900/40 transition-[transform,border-color,box-shadow] duration-[var(--motion-normal)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-teal-500/30 hover:shadow-[0_4px_16px_rgba(15,118,110,0.08)] flex flex-col md:flex-row md:items-center justify-between gap-4 animate-slide-up"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <h4 className="font-bold text-sm text-slate-800 dark:text-slate-200">
                             {appt.patient.user.name || "Anonymous Patient"}
                           </h4>
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400 px-2 py-0.5 bg-teal-550/10 rounded">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400 px-2 py-0.5 bg-teal-550/10 rounded inline-flex items-center gap-1.5">
+                            <span className="h-1.5 w-1.5 rounded-full bg-teal-600 status-dot-confirmed" />
                             CONFIRMED
                           </span>
                         </div>
@@ -318,7 +320,7 @@ export default function DoctorDashboardClient({
             <div className="glass-card rounded-2xl p-6 border border-slate-200/60 dark:border-slate-800/80 shadow-md">
               <h3 className="font-bold text-sm text-slate-400 uppercase tracking-wider mb-4">Past & Cancelled Log</h3>
               <div className="space-y-3">
-                {pastAppointments.map((appt) => {
+                {pastAppointments.map((appt, index) => {
                   const dateStr = new Date(appt.timeSlot.date).toLocaleDateString("en-US", {
                     month: "short",
                     day: "numeric",
@@ -326,7 +328,7 @@ export default function DoctorDashboardClient({
                     timeZone: "UTC",
                   });
                   return (
-                    <div key={appt.id} className="flex justify-between items-center text-xs p-3 rounded-lg bg-slate-50 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800/40">
+                    <div key={appt.id} style={{ animationDelay: `${Math.min(index, 5) * 40}ms` }} className="flex justify-between items-center text-xs p-3 rounded-lg bg-slate-50 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800/40 transition-[transform,border-color,box-shadow] duration-[var(--motion-normal)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-teal-500/30 hover:shadow-[0_4px_16px_rgba(15,118,110,0.08)] animate-slide-up">
                       <div>
                         <p className="font-semibold">{appt.patient.user.name}</p>
                         <p className="text-slate-450 text-[10px]">{dateStr} &bull; {appt.timeSlot.startTime}</p>
@@ -382,7 +384,7 @@ export default function DoctorDashboardClient({
       {/* Review Completed Consultation Modal */}
       {selectedAppt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-xl p-6 shadow-2xl relative max-h-[85vh] flex flex-col overflow-hidden animate-scale-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-xl p-6 shadow-2xl relative max-h-[85vh] flex flex-col overflow-hidden animate-scale-in data-[state=open]:animate-scale-in">
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-slate-200 dark:border-slate-800 pb-3 shrink-0">
               <div className="flex items-center gap-2">

@@ -172,7 +172,7 @@ export default function PatientRecordsClient({
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
       {/* Top Header Navigation */}
       <header className="flex items-center gap-3 pb-6 border-b border-slate-200 dark:border-slate-800/80 mb-8">
         <Link
@@ -271,7 +271,7 @@ export default function PatientRecordsClient({
               </div>
             ) : (
               <div className="relative space-y-4 before:absolute before:bottom-4 before:left-4 before:top-4 before:w-px before:bg-sage-200">
-                {appointments.map((appt) => {
+                {appointments.map((appt, index) => {
                   const dateStr = new Date(appt.timeSlot.date).toLocaleDateString("en-US", {
                     weekday: "short",
                     month: "short",
@@ -282,7 +282,8 @@ export default function PatientRecordsClient({
                   return (
                     <div 
                       key={appt.id}
-                      className="relative ml-8 p-4 rounded-xl border border-slate-100 dark:border-slate-850 bg-white dark:bg-slate-900/40 hover:border-teal-500/20 transition duration-300 flex flex-col gap-3"
+                      style={{ animationDelay: `${Math.min(index, 5) * 40}ms` }}
+                      className="relative ml-8 p-4 rounded-xl border border-slate-100 dark:border-slate-850 bg-white dark:bg-slate-900/40 transition-[transform,border-color,box-shadow] duration-[var(--motion-normal)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-teal-500/30 hover:shadow-[0_4px_16px_rgba(15,118,110,0.08)] flex flex-col gap-3 animate-slide-up"
                     >
                       <span className="absolute -left-10 top-5 h-4 w-4 rounded-full border-4 border-warm-50 bg-teal-700 shadow-sm" />
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-850">
@@ -341,7 +342,7 @@ export default function PatientRecordsClient({
       {/* Details View Modal */}
       {selectedAppt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-2xl p-6 shadow-2xl relative max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-2xl p-6 shadow-2xl relative max-h-[90vh] flex flex-col overflow-hidden animate-scale-in data-[state=open]:animate-scale-in">
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-slate-200 dark:border-slate-800 pb-4 shrink-0">
               <div className="flex items-center gap-3">

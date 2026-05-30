@@ -90,7 +90,7 @@ export default function DoctorListingClient({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
       {/* Top Header */}
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800/80 mb-8">
         <div className="flex items-center gap-3">
@@ -206,7 +206,7 @@ export default function DoctorListingClient({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {initialDoctors.map((doc) => {
+          {initialDoctors.map((doc, index) => {
             const initials = doc.user.name
               ? doc.user.name
                   .split(" ")
@@ -219,7 +219,8 @@ export default function DoctorListingClient({
             return (
               <div
                 key={doc.id}
-                className="glass-card rounded-2xl p-6 border border-slate-200/60 dark:border-slate-800/80 shadow-sm hover:border-teal-500/30 dark:hover:border-teal-500/30 hover:shadow-lg hover:shadow-teal-500/5 transition duration-300 flex flex-col justify-between"
+                style={{ animationDelay: `${Math.min(index, 5) * 40}ms` }}
+                className="glass-card rounded-2xl p-6 border border-slate-200/60 dark:border-slate-800/80 shadow-sm transition-[transform,border-color,box-shadow] duration-[var(--motion-normal)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-teal-500/30 hover:shadow-[0_4px_16px_rgba(15,118,110,0.08)] flex flex-col justify-between animate-slide-up"
               >
                 <div>
                   {/* Top info and avatar */}

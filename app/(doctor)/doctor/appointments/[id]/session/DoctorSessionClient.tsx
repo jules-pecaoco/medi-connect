@@ -267,7 +267,7 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
   });
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 animate-fade-in">
       {/* Header Panel */}
       <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between shadow-sm shrink-0">
         <div className="flex items-center gap-3">
@@ -538,7 +538,7 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
                         </div>
                       ) : (
                         <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                          {appointment.patient.pastAppointments.map((appt) => {
+                          {appointment.patient.pastAppointments.map((appt, index) => {
                             const dateStr = new Date(appt.date).toLocaleDateString("en-US", {
                               month: "short",
                               day: "numeric",
@@ -549,7 +549,8 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
                               <div
                                 key={appt.id}
                                 onClick={() => setSelectedPastAppt(appt)}
-                                className="p-2.5 rounded-xl border border-slate-100 dark:border-slate-850 bg-slate-50 dark:bg-slate-950/40 hover:border-teal-500/20 hover:bg-white dark:hover:bg-slate-900 cursor-pointer transition text-[11px]"
+                                style={{ animationDelay: `${Math.min(index, 5) * 40}ms` }}
+                                className="p-2.5 rounded-xl border border-slate-100 dark:border-slate-850 bg-slate-50 dark:bg-slate-950/40 hover:border-teal-500/30 hover:bg-white dark:hover:bg-slate-900 cursor-pointer transition-[transform,border-color,box-shadow] duration-[var(--motion-normal)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(15,118,110,0.08)] text-[11px] animate-slide-up"
                               >
                                 <div className="flex justify-between items-center font-bold text-slate-700 dark:text-slate-300">
                                   <span>Dr. {appt.doctorName}</span>
@@ -600,7 +601,7 @@ export default function DoctorSessionClient({ appointment }: DoctorSessionClient
       {/* Historical Record Detail Modal */}
       {selectedPastAppt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-xl p-6 shadow-2xl relative max-h-[85vh] flex flex-col overflow-hidden animate-scale-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-xl p-6 shadow-2xl relative max-h-[85vh] flex flex-col overflow-hidden animate-scale-in data-[state=open]:animate-scale-in">
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-slate-200 dark:border-slate-800 pb-3 shrink-0">
               <div>

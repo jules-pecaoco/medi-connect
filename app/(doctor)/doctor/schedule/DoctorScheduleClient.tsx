@@ -114,7 +114,7 @@ export default function DoctorScheduleClient({ initialSchedules }: DoctorSchedul
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
       {/* Top Header */}
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800/85 mb-8">
         <div className="flex items-center gap-3">
@@ -264,11 +264,12 @@ export default function DoctorScheduleClient({ initialSchedules }: DoctorSchedul
                 </p>
               </div>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-7">
-                {schedules.map((block) => (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {schedules.map((block, index) => (
                   <div 
                     key={block.id}
-                    className="p-5 rounded-2xl border border-teal-200 bg-teal-50 shadow-sm relative group hover:border-teal-600 hover:shadow-md transition duration-200"
+                    style={{ animationDelay: `${Math.min(index, 5) * 40}ms` }}
+                    className="relative min-h-40 rounded-2xl border border-teal-200 bg-teal-50 p-5 shadow-sm transition-[transform,border-color,box-shadow] duration-[var(--motion-normal)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-teal-600 hover:shadow-[0_4px_16px_rgba(15,118,110,0.08)] animate-slide-up"
                   >
                     <div className="flex items-start justify-between">
                       <div>
