@@ -1,19 +1,30 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import { DM_Sans, DM_Serif_Display, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { auth } from "@/auth";
 import { ToastProvider } from "@/components/ui/toast";
 import NotificationListener from "@/components/shared/NotificationListener";
 
-const outfit = Outfit({
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-sans",
 });
 
+const dmSerif = DM_Serif_Display({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-display",
+});
+
+const jetBrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+});
+
 export const metadata: Metadata = {
-  title: "MediConnect — Modern Telehealth & Video Consultations",
-  description: "Experience premium, instant healthcare consultation, Claude-driven symptom recommendations, and seamless secure telehealth consulting from anywhere.",
+  title: "MediConnect - Modern Telehealth & Video Consultations",
+  description:
+    "Experience premium, instant healthcare consultation, Gemini-driven symptom recommendations, and seamless secure telehealth consulting from anywhere.",
   keywords: ["telehealth", "doctor booking", "video consultation", "AI healthcare triage"],
 };
 
@@ -25,18 +36,11 @@ export default async function RootLayout({
   const session = await auth();
 
   return (
-    <html lang="en" className={`${outfit.variable} h-full scroll-smooth`}>
+    <html lang="en" className={`${dmSans.variable} ${dmSerif.variable} ${jetBrainsMono.variable} h-full scroll-smooth`}>
       <body className="min-h-full flex flex-col antialiased">
         <ToastProvider>
-          {session?.user?.id && (
-            <NotificationListener 
-              userId={session.user.id} 
-              role={session.user.role as "PATIENT" | "DOCTOR"} 
-            />
-          )}
-          <main className="flex-1 flex flex-col relative">
-            {children}
-          </main>
+          {session?.user?.id && <NotificationListener userId={session.user.id} role={session.user.role as "PATIENT" | "DOCTOR"} />}
+          <main className="flex-1 flex flex-col relative">{children}</main>
         </ToastProvider>
       </body>
     </html>

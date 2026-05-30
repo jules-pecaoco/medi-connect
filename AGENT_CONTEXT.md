@@ -56,7 +56,7 @@ Complete all required features before building extras.
 | ORM                      | Prisma ORM                                    |
 | Authentication           | Auth.js (NextAuth v5 stable)                  |
 | Real-time Notifications  | Pusher Channels                               |
-| AI Recommendation Engine | Gemini (latest stable Sonnet model)           |
+| AI Recommendation Engine | Gemini (latest stable model)                  |
 | Video Consultation       | Daily.co                                      |
 | File Storage             | Vercel Blob                                   |
 | Deployment               | Vercel                                        |
@@ -288,7 +288,7 @@ Avoid:
 
 # AI Recommendation Engine
 
-Use the latest stable Claude Sonnet production model available via the Anthropic SDK.
+Use the latest stable Gemini production model available via the Anthropic SDK.
 
 Prompt:
 
@@ -562,7 +562,7 @@ These are deliberate product/UX improvements added after the required MVP medica
 - Auth.js authentication
 - Pusher real-time notifications
 - Daily.co video consultations
-- Gemini-based recommendation engine (replacing Claude as per user specifications using gemini-1.5-flash)
+- Gemini-based recommendation engine (replacing Gemini as per user specifications using gemini-1.5-flash)
 - Downgraded to Prisma 6 to maintain standard env var datasource URL patterns in schema.prisma
 - UTC date standardizations (all date searches/seeding normalize to midnight UTC to maintain absolute consistency across local node, database query parameters, and Vercel edge times)
 - Suspense Boundaries for client side bails (useSearchParams wrapped in `<Suspense>` inside auth routes to satisfy static compilation during optimized production builds)
@@ -646,7 +646,7 @@ Verification:
 ./app/layout.tsx
 ./app/page.tsx
 ./auth.ts
-./CLAUDE.md
+./Gemini.md
 ./eslint.config.mjs
 ./lib/date-utils.ts
 ./lib/daily.ts
