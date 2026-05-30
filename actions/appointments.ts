@@ -421,6 +421,7 @@ export async function completeAppointment(appointmentId: string, notes: string, 
     });
 
     revalidatePath("/patient/dashboard");
+    revalidatePath("/patient/records");
     revalidatePath("/doctor/dashboard");
 
     return { success: true as const, data: updated };

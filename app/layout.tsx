@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { DM_Sans, DM_Serif_Display, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { auth } from "@/auth";
 import { ToastProvider } from "@/components/ui/toast";
 import NotificationListener from "@/components/shared/NotificationListener";
+import NavigationProgress from "@/components/shared/NavigationProgress";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -39,6 +41,9 @@ export default async function RootLayout({
     <html lang="en" className={`${dmSans.variable} ${dmSerif.variable} ${jetBrainsMono.variable} h-full scroll-smooth`}>
       <body className="min-h-full flex flex-col antialiased">
         <ToastProvider>
+          <Suspense fallback={null}>
+            <NavigationProgress />
+          </Suspense>
           {session?.user?.id && <NotificationListener userId={session.user.id} role={session.user.role as "PATIENT" | "DOCTOR"} />}
           <main className="flex-1 flex flex-col relative">{children}</main>
         </ToastProvider>

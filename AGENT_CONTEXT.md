@@ -58,6 +58,7 @@ Complete all required features before building extras.
 | Real-time Notifications  | Pusher Channels                               |
 | AI Recommendation Engine | Gemini (latest stable model)                  |
 | Video Consultation       | Daily.co                                      |
+| Rx PDF Export            | jsPDF (client-side prescription slips)        |
 | File Storage             | Vercel Blob                                   |
 | Deployment               | Vercel                                        |
 
@@ -288,7 +289,7 @@ Avoid:
 
 # AI Recommendation Engine
 
-Use the latest stable Gemini production model available via the Anthropic SDK.
+Use the latest stable Gemini production model available via the Google Gemini API.
 
 Prompt:
 
@@ -412,9 +413,12 @@ Only proceed after current phase is manually verified working.
 
 ```bash
 DATABASE_URL=
+AUTH_SECRET=
+AUTH_URL=
+AUTH_TRUST_HOST=
 NEXTAUTH_SECRET=
 NEXTAUTH_URL=
-ANTHROPIC_API_KEY=
+GEMINI_API_KEY=
 DAILY_API_KEY=
 PUSHER_APP_ID=
 PUSHER_SECRET=
@@ -551,6 +555,29 @@ These are deliberate product/UX improvements added after the required MVP medica
   - Doctors can type at least 2 letters in the prescription textarea and press `Tab` to expand the current line into a full dosage/SIG instruction.
   - Prescriptions remain editable plain text on the appointment record, so no database migration or new API surface was introduced.
   - Implemented in `app/(doctor)/doctor/appointments/[id]/session/DoctorSessionClient.tsx`.
+- Visual/UX refinement pass:
+  - Added clinical-warmth design tokens, shadcn-style primitives, light-mode enforcement, route fades, list staggers, card lift states, modal scale-in, status pulse dots, skeleton motion, and Gemini typing dots.
+  - Refined auth pages, onboarding, doctor listing, schedule, records, symptoms, session screens, and dashboard surfaces without changing backend contracts.
+- Dashboard workspace shell experiment:
+  - Patient and doctor dashboards were restructured into local tabbed workspace shells with sidebar/mobile navigation.
+  - TypeScript reportedly passed in the previous thread before interruption.
+  - Treat this as a recent UI change that still needs browser QA and lint/build confirmation before final polish.
+- Loading feedback UX pass:
+  - Added route-level `loading.tsx` skeletons for major patient/doctor server pages using shared `PageLoadingSkeleton` variants (dashboard, listing, detail).
+  - Added global top navigation progress bar via `NavigationProgress` mounted in root layout (with `Suspense` for `useSearchParams`).
+  - Added action-level spinners/overlays for cancel, reschedule slot fetch, doctor search/filter pagination, sign-out, and post-mutation `router.refresh()` on patient/doctor dashboards.
+  - Added `Activity` spinner icons to doctor schedule CRUD pending states.
+- Patient and doctor profile editing:
+  - Extracted shared `PatientProfileForm` and `DoctorProfileForm` components (create + edit modes) reused by onboarding and dedicated edit routes.
+  - Added `/patient/profile/edit` and `/doctor/profile/edit` with auth guards and pre-filled forms calling existing `upsertPatientProfile` / `upsertDoctorProfile` server actions.
+  - Expanded dashboard **My Profile** tabs with full read-only fields, **Edit Profile** links, and `?tab=profile` return navigation after save.
+  - Fixed doctor specialization typo (`Gphthalmology` → `Ophthalmology`) in profile form specialization list.
+- Medical records, Rx PDF, and digital authorization:
+  - Replaced static doctor **Notes & Rx** tab placeholder with a paginated list of completed consultations (Notes/Rx badges, **Review Record** modal reuse, optional **Print Rx** from modal).
+  - Added shared `lib/prescription-slip.ts` for HTML print slips, HTML escaping, and client-side PDF download via `jspdf`.
+  - Patient records now support **Download PDF** alongside **Print Rx** on timeline cards and detail modal.
+  - Prescription slips use industry-standard derived electronic authorization: cursive-style provider name, license number, signed timestamp (`appointment.updatedAt`), platform attestation, and Rx ID — no uploaded signature image or schema migration.
+  - `completeAppointment` now revalidates `/patient/records` so new consult records appear promptly.
 
 ---
 
@@ -562,7 +589,7 @@ These are deliberate product/UX improvements added after the required MVP medica
 - Auth.js authentication
 - Pusher real-time notifications
 - Daily.co video consultations
-- Gemini-based recommendation engine (replacing Gemini as per user specifications using gemini-1.5-flash)
+- Gemini-based recommendation engine (replacing Claude/Anthropic as per user specifications using gemini-1.5-flash)
 - Downgraded to Prisma 6 to maintain standard env var datasource URL patterns in schema.prisma
 - UTC date standardizations (all date searches/seeding normalize to midnight UTC to maintain absolute consistency across local node, database query parameters, and Vercel edge times)
 - Suspense Boundaries for client side bails (useSearchParams wrapped in `<Suspense>` inside auth routes to satisfy static compilation during optimized production builds)
@@ -572,40 +599,83 @@ These are deliberate product/UX improvements added after the required MVP medica
 - Global light-mode enforcement by disabling Tailwind's media-query dark mode via `@custom-variant dark (&:not(*))`.
 - Doctor consultation prescriptions use local, client-side medication templates with Tab completion; prescriptions remain stored as editable plain text on the appointment record.
 - Patient booking and rescheduling now enforce future-only appointment slots at both availability-fetch and mutation layers.
+- Production Vercel auth uses uploaded environment variables, including `AUTH_URL`, `AUTH_SECRET`, `AUTH_TRUST_HOST=true`, `NEXTAUTH_URL`, and `NEXTAUTH_SECRET`.
+- `.vercelignore` excludes local `.env` files from future CLI deployments.
+- Route-level loading feedback uses App Router `loading.tsx` plus a global `NavigationProgress` bar; async actions use local pending spinners rather than a global state library.
+- Profile edits reuse existing `upsertPatientProfile` / `upsertDoctorProfile` server actions via dedicated edit routes; name/email remain on `User` and are not editable in profile forms.
+- Prescription slips are generated client-side via shared `lib/prescription-slip.ts` with `jspdf` for PDF download; digital authorization is derived from provider name, license number, and completion timestamp (no signature upload field).
 
 ---
 
 ## Known Issues
 
-None currently.
+- Dashboard workspace-shell and recent UX passes (loading feedback, profile edit, records/Rx PDF) have passed `npx tsc --noEmit` but still need a consolidated browser QA pass before final submission polish.
+- Full `npm run lint` was previously blocked by generated `.vercel/.next` output and pre-existing project lint issues unrelated to recent changes.
+- `.vercelignore` was added after the successful env-var redeploy; the follow-up redeploy to apply that ignore file was not approved, so it will apply on the next deployment.
 
 ---
 
 ## Latest Milestone Update
 
-Completed doctor prescription Tab autocomplete during live consultation.
+Post-MVP UX and records polish milestone completed across three threads:
 
-Fixed patient booking/rescheduling so appointments can only be made for future slot start times. Same-day slots whose start time has already passed are filtered out of patient availability and rejected by server-side booking mutations.
+**Loading feedback UX**
+- Added shared loading components: `PageLoadingSkeleton`, `NavigationProgress`, `LoadingSpinner`.
+- Added 9 route-level `loading.tsx` files for patient/doctor dashboards, doctors list/detail, records, symptoms, sessions, and schedule.
+- Improved pending feedback on dashboard mutations, doctor listing filter/pagination, and schedule CRUD.
 
-Added a dedicated "Changes Made Outside MVP Scope" section to distinguish extra enhancements from required MVP checklist items.
+**Profile editing**
+- Added shared `PatientProfileForm` / `DoctorProfileForm` and dedicated edit routes at `/patient/profile/edit` and `/doctor/profile/edit`.
+- Slimmed onboarding forms to wrappers around shared profile forms.
+- Dashboard profile tabs expanded with medical history (patient), full doctor credentials (doctor), and Edit Profile links.
 
-Replaced the default Next.js README with a submission-ready project README covering product overview, feature list, tech stack, setup, environment variables, database commands, scripts, deployment, and implementation notes.
+**Medical records & Rx**
+- Doctor **Notes & Rx** tab now lists completed consultations with review modal and print support.
+- Patient records support **Download PDF** via `jspdf` alongside existing print flow.
+- Prescription slips include derived digital authorization block (name, license, timestamp, platform attestation).
+- `completeAppointment` revalidates `/patient/records`.
 
 Modified files:
 
 - `actions/appointments.ts`
-- `actions/schedule.ts`
-- `app/(patient)/patient/doctors/[id]/DoctorDetailClient.tsx`
-- `app/(doctor)/doctor/appointments/[id]/session/DoctorSessionClient.tsx`
+- `actions/auth.ts`
+- `app/layout.tsx`
+- `app/(patient)/patient/dashboard/PatientDashboardClient.tsx`
+- `app/(patient)/patient/dashboard/page.tsx`
+- `app/(patient)/patient/dashboard/loading.tsx`
+- `app/(patient)/patient/doctors/DoctorListingClient.tsx`
+- `app/(patient)/patient/doctors/loading.tsx`
+- `app/(patient)/patient/doctors/[id]/loading.tsx`
+- `app/(patient)/patient/records/PatientRecordsClient.tsx`
+- `app/(patient)/patient/records/loading.tsx`
+- `app/(patient)/patient/symptoms/loading.tsx`
+- `app/(patient)/patient/appointments/[id]/session/loading.tsx`
+- `app/(patient)/patient/onboarding/PatientOnboardingForm.tsx`
+- `app/(patient)/patient/profile/edit/page.tsx`
+- `app/(patient)/patient/profile/edit/loading.tsx`
+- `app/(doctor)/doctor/dashboard/DoctorDashboardClient.tsx`
+- `app/(doctor)/doctor/dashboard/page.tsx`
+- `app/(doctor)/doctor/dashboard/loading.tsx`
+- `app/(doctor)/doctor/schedule/DoctorScheduleClient.tsx`
+- `app/(doctor)/doctor/schedule/loading.tsx`
+- `app/(doctor)/doctor/onboarding/DoctorOnboardingForm.tsx`
+- `app/(doctor)/doctor/profile/edit/page.tsx`
+- `app/(doctor)/doctor/profile/edit/loading.tsx`
+- `app/(doctor)/doctor/appointments/[id]/session/loading.tsx`
+- `components/patient/PatientProfileForm.tsx`
+- `components/doctor/DoctorProfileForm.tsx`
+- `components/shared/PageLoadingSkeleton.tsx`
+- `components/shared/NavigationProgress.tsx`
+- `components/shared/LoadingSpinner.tsx`
+- `lib/prescription-slip.ts`
+- `package.json`
+- `package-lock.json`
 - `AGENT_CONTEXT.md`
-- `lib/date-utils.ts`
-- `README.md`
 
 Verification:
 
-- `npx tsc --noEmit` passed.
-- `npx eslint actions/appointments.ts actions/schedule.ts lib/date-utils.ts "app/(patient)/patient/doctors/[id]/DoctorDetailClient.tsx"` passed.
-- Full `npm run lint` was previously blocked by generated `.vercel/.next` output and pre-existing project lint issues unrelated to these changes.
+- `npx tsc --noEmit` passed after loading feedback, profile edit, and records/Rx PDF changes.
+- Spot eslint on touched files passed where run; full-project lint not re-run cleanly due to prior `.vercel/.next` noise.
 
 ---
 
@@ -624,37 +694,65 @@ Verification:
 ./app/(auth)/register/page.tsx
 ./app/(doctor)/doctor/dashboard/DoctorDashboardClient.tsx
 ./app/(doctor)/doctor/dashboard/page.tsx
+./app/(doctor)/doctor/dashboard/loading.tsx
 ./app/(doctor)/doctor/onboarding/DoctorOnboardingForm.tsx
 ./app/(doctor)/doctor/onboarding/page.tsx
+./app/(doctor)/doctor/profile/edit/page.tsx
+./app/(doctor)/doctor/profile/edit/loading.tsx
 ./app/(doctor)/doctor/schedule/DoctorScheduleClient.tsx
 ./app/(doctor)/doctor/schedule/page.tsx
+./app/(doctor)/doctor/schedule/loading.tsx
 ./app/(patient)/patient/dashboard/page.tsx
 ./app/(patient)/patient/dashboard/PatientDashboardClient.tsx
+./app/(patient)/patient/dashboard/loading.tsx
 ./app/(patient)/patient/doctors/[id]/DoctorDetailClient.tsx
 ./app/(patient)/patient/doctors/[id]/page.tsx
+./app/(patient)/patient/doctors/[id]/loading.tsx
 ./app/(patient)/patient/doctors/DoctorListingClient.tsx
 ./app/(patient)/patient/doctors/page.tsx
+./app/(patient)/patient/doctors/loading.tsx
 ./app/(patient)/patient/onboarding/page.tsx
 ./app/(patient)/patient/onboarding/PatientOnboardingForm.tsx
+./app/(patient)/patient/profile/edit/page.tsx
+./app/(patient)/patient/profile/edit/loading.tsx
 ./app/(patient)/patient/records/page.tsx
 ./app/(patient)/patient/records/PatientRecordsClient.tsx
+./app/(patient)/patient/records/loading.tsx
 ./app/(patient)/patient/symptoms/page.tsx
 ./app/(patient)/patient/symptoms/SymptomsClient.tsx
+./app/(patient)/patient/symptoms/loading.tsx
 ./app/api/recommend/route.ts
 ./app/favicon.ico
 ./app/globals.css
 ./app/layout.tsx
 ./app/page.tsx
 ./auth.ts
-./Gemini.md
+./components/doctor/DoctorProfileForm.tsx
+./components/patient/PatientProfileForm.tsx
+./components/shared/LoadingSpinner.tsx
+./components/shared/NavigationProgress.tsx
+./components/shared/NotificationListener.tsx
+./components/shared/PageLoadingSkeleton.tsx
+./components/ui/avatar.tsx
+./components/ui/badge.tsx
+./components/ui/button.tsx
+./components/ui/card.tsx
+./components/ui/input.tsx
+./components/ui/skeleton.tsx
+./components/ui/toast.tsx
 ./eslint.config.mjs
+./Gemini.md
 ./lib/date-utils.ts
 ./lib/daily.ts
 ./lib/db.ts
+./lib/prescription-slip.ts
+./lib/utils.ts
 ./app/(patient)/patient/appointments/[id]/session/page.tsx
 ./app/(patient)/patient/appointments/[id]/session/PatientSessionClient.tsx
+./app/(patient)/patient/appointments/[id]/session/loading.tsx
 ./app/(doctor)/doctor/appointments/[id]/session/page.tsx
 ./app/(doctor)/doctor/appointments/[id]/session/DoctorSessionClient.tsx
+./app/(doctor)/doctor/appointments/[id]/session/loading.tsx
 ./middleware.ts
 ./package.json
 ./package-lock.json
@@ -667,6 +765,7 @@ Verification:
 ./public/vercel.svg
 ./public/window.svg
 ./README.md
+./tailwind.config.ts
 ./tsconfig.json
 ./validators/auth.ts
 ```
@@ -677,16 +776,19 @@ Verification:
 
 | Variable                   | Local | Vercel |
 | -------------------------- | ----- | ------ |
-| DATABASE_URL               | ☑     | ☐      |
-| NEXTAUTH_SECRET            | ☑     | ☐      |
-| NEXTAUTH_URL               | ☑     | ☐      |
-| GEMINI_API_KEY             | ☑     | ☐      |
-| DAILY_API_KEY              | ☑     | ☐      |
-| PUSHER_APP_ID              | ☑     | ☐      |
-| PUSHER_SECRET              | ☑     | ☐      |
-| NEXT_PUBLIC_PUSHER_KEY     | ☑     | ☐      |
-| NEXT_PUBLIC_PUSHER_CLUSTER | ☑     | ☐      |
-| BLOB_READ_WRITE_TOKEN      | ☑     | ☐      |
+| DATABASE_URL               | ☑     | ☑      |
+| AUTH_SECRET                | ☑     | ☑      |
+| AUTH_URL                   | ☑     | ☑      |
+| AUTH_TRUST_HOST            | ☑     | ☑      |
+| NEXTAUTH_SECRET            | ☑     | ☑      |
+| NEXTAUTH_URL               | ☑     | ☑      |
+| GEMINI_API_KEY             | ☑     | ☑      |
+| DAILY_API_KEY              | ☑     | ☑      |
+| PUSHER_APP_ID              | ☑     | ☑      |
+| PUSHER_SECRET              | ☑     | ☑      |
+| NEXT_PUBLIC_PUSHER_KEY     | ☑     | ☑      |
+| NEXT_PUBLIC_PUSHER_CLUSTER | ☑     | ☑      |
+| BLOB_READ_WRITE_TOKEN      | ☑     | ☑      |
 
 ---
 
