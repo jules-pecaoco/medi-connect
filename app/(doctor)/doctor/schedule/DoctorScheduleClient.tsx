@@ -264,11 +264,11 @@ export default function DoctorScheduleClient({ initialSchedules }: DoctorSchedul
                 </p>
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-7">
                 {schedules.map((block) => (
                   <div 
                     key={block.id}
-                    className="p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 bg-white dark:bg-slate-900/40 shadow-sm relative group hover:border-teal-500/20 dark:hover:border-teal-500/20 hover:shadow-md transition duration-200"
+                    className="p-5 rounded-2xl border border-teal-200 bg-teal-50 shadow-sm relative group hover:border-teal-600 hover:shadow-md transition duration-200"
                   >
                     <div className="flex items-start justify-between">
                       <div>
@@ -284,6 +284,10 @@ export default function DoctorScheduleClient({ initialSchedules }: DoctorSchedul
                         <p className="text-xs text-slate-400 mt-1">
                           Slot Interval: <span className="font-semibold text-slate-500 dark:text-slate-300">{block.slotDurationMinutes} mins</span>
                         </p>
+                        <div className="mt-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-teal-800">
+                          <span className="h-2.5 w-2.5 rounded-full bg-teal-600" />
+                          Available slots
+                        </div>
                       </div>
 
                       <button

@@ -194,6 +194,21 @@ export default function SymptomsClient() {
               </div>
             </div>
           )}
+
+          {isLoading && (
+            <div className="clinical-card space-y-4 p-6 animate-fade-in">
+              <div className="flex items-center gap-2 text-sm font-bold text-teal-800">
+                <Activity className="h-4 w-4 animate-spin" />
+                Reading symptom pattern
+              </div>
+              <div className="h-3 w-4/5 animate-pulse rounded-full bg-sage-200" />
+              <div className="h-3 w-3/5 animate-pulse rounded-full bg-sage-200" />
+              <div className="flex gap-2 pt-2">
+                <span className="h-8 w-24 animate-pulse rounded-full bg-teal-100" />
+                <span className="h-8 w-20 animate-pulse rounded-full bg-teal-100" />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

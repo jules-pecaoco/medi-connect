@@ -115,7 +115,7 @@ export default function DoctorListingClient({
       </header>
 
       {/* Search & Filter Form */}
-      <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <form onSubmit={handleSearchSubmit} className="sticky top-0 z-20 grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 rounded-2xl border border-warm-200 bg-warm-100/95 p-3 backdrop-blur">
         {/* Search Input */}
         <div className="md:col-span-2 relative">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -163,6 +163,36 @@ export default function DoctorListingClient({
         </div>
       </form>
 
+      <div className="mb-8 flex gap-2 overflow-x-auto pb-2">
+        <button
+          type="button"
+          onClick={() => {
+            setSpecialization("ALL");
+            handleFilterChange(search, "ALL", 1);
+          }}
+          className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition ${
+            specialization === "ALL" ? "border-teal-700 bg-teal-700 text-white" : "border-sage-200 bg-white text-slate-600 hover:border-teal-700"
+          }`}
+        >
+          All
+        </button>
+        {specializations.map((spec) => (
+          <button
+            key={spec}
+            type="button"
+            onClick={() => {
+              setSpecialization(spec);
+              handleFilterChange(search, spec, 1);
+            }}
+            className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition ${
+              specialization === spec ? "border-teal-700 bg-teal-700 text-white" : "border-sage-200 bg-white text-slate-600 hover:border-teal-700"
+            }`}
+          >
+            {spec}
+          </button>
+        ))}
+      </div>
+
       {/* Main Listing Grid */}
       {initialDoctors.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-slate-200 dark:border-slate-800/85 rounded-2xl p-6 bg-white/40 dark:bg-slate-900/10">
@@ -194,8 +224,9 @@ export default function DoctorListingClient({
                 <div>
                   {/* Top info and avatar */}
                   <div className="flex items-center gap-4 mb-4">
-                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                    <div className="relative h-12 w-12 rounded-xl bg-gradient-to-br from-teal-600 to-sage-200 flex items-center justify-center text-white font-bold text-sm shadow-md">
                       {initials}
+                      <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-teal-500" />
                     </div>
                     <div>
                       <h3 className="font-extrabold text-slate-800 dark:text-slate-100 hover:text-teal-600 transition">

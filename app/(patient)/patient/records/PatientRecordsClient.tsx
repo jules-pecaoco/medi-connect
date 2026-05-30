@@ -270,7 +270,7 @@ export default function PatientRecordsClient({
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="relative space-y-4 before:absolute before:bottom-4 before:left-4 before:top-4 before:w-px before:bg-sage-200">
                 {appointments.map((appt) => {
                   const dateStr = new Date(appt.timeSlot.date).toLocaleDateString("en-US", {
                     weekday: "short",
@@ -282,8 +282,9 @@ export default function PatientRecordsClient({
                   return (
                     <div 
                       key={appt.id}
-                      className="p-4 rounded-xl border border-slate-100 dark:border-slate-850 bg-white dark:bg-slate-900/40 hover:border-teal-500/20 transition duration-300 flex flex-col gap-3"
+                      className="relative ml-8 p-4 rounded-xl border border-slate-100 dark:border-slate-850 bg-white dark:bg-slate-900/40 hover:border-teal-500/20 transition duration-300 flex flex-col gap-3"
                     >
+                      <span className="absolute -left-10 top-5 h-4 w-4 rounded-full border-4 border-warm-50 bg-teal-700 shadow-sm" />
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-850">
                         <div>
                           <div className="flex items-center gap-2">

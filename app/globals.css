@@ -4,35 +4,44 @@
 @custom-variant dark (&:not(*));
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #f7f3ea;
+  --foreground: #172033;
   
-  --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card: #fffdf8;
+  --card-foreground: #172033;
   
-  --popover: #ffffff;
-  --popover-foreground: #0f172a;
+  --popover: #fffdf8;
+  --popover-foreground: #172033;
   
-  --primary: #0d9488;
+  --primary: #0f766e;
   --primary-foreground: #ffffff;
   
-  --secondary: #0f766e;
-  --secondary-foreground: #ffffff;
+  --secondary: #e6f2ec;
+  --secondary-foreground: #134e4a;
   
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
+  --muted: #f1eee6;
+  --muted-foreground: #596579;
   
-  --accent: #f1f5f9;
-  --accent-foreground: #0f172a;
+  --accent: #dfece3;
+  --accent-foreground: #134e4a;
   
-  --destructive: #ef4444;
+  --destructive: #dc2626;
   --destructive-foreground: #ffffff;
   
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #14b8a6;
+  --border: #ddd8cd;
+  --input: #d8d2c5;
+  --ring: #0f766e;
   
-  --radius: 0.75rem;
+  --radius: 0.625rem;
+  --radius-card: 1rem;
+  --radius-pill: 999px;
+  --surface-warm: #fffaf0;
+  --surface-sage: #e7efe7;
+  --surface-teal: #ecfdf5;
+  --success: #0f766e;
+  --warning: #b45309;
+  --error: #dc2626;
+  --shadow-soft: 0 14px 40px rgba(15, 23, 42, 0.08);
 }
 
 @theme inline {
@@ -55,6 +64,16 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-warm-50: #fffdf8;
+  --color-warm-100: #f7f3ea;
+  --color-warm-200: #ede6d8;
+  --color-sage-50: #f3f8f2;
+  --color-sage-100: #e7efe7;
+  --color-sage-200: #cfe0d1;
+  --color-teal-50: #ecfdf5;
+  --color-teal-100: #ccfbf1;
+  --color-teal-700: #0f766e;
+  --color-teal-800: #115e59;
   --color-teal-350: #2dd4bf;
   --color-teal-450: #14b8a6;
   --color-teal-550: #0d9488;
@@ -73,12 +92,23 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+  --radius-card: var(--radius-card);
+  --radius-pill: var(--radius-pill);
+  --shadow-clinical: var(--shadow-soft);
   
-  --font-sans: 'Outfit', 'Inter', sans-serif;
+  --font-sans: var(--font-sans), "DM Sans", "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-display: var(--font-display), "DM Serif Display", "Lora", Georgia, serif;
+  --font-mono: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
 }
 
+@layer base {
 * {
   border-color: var(--border);
+}
+
+html {
+  color-scheme: light;
+  background: var(--background);
 }
 
 body {
@@ -89,25 +119,104 @@ body {
   min-height: 100vh;
 }
 
-/* Glassmorphism Styles */
+h1,
+h2,
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  min-height: 44px;
+}
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: #99f6e4;
+  color: #134e4a;
+}
+}
+
+/* Clinical warmth system utilities */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 253, 248, 0.88);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(221, 216, 205, 0.85);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 253, 248, 0.94);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 8px 32px 0 rgba(13, 148, 136, 0.04);
+  border: 1px solid rgba(221, 216, 205, 0.9);
+  box-shadow: var(--shadow-soft);
 }
 
-/* Custom interactive ring */
-.input-glow:focus {
+.input-glow:focus,
+.input-glow:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.25);
+  box-shadow: 0 0 0 2px #fffdf8, 0 0 0 4px rgba(15, 118, 110, 0.35);
   border-color: var(--primary);
+}
+
+.clinical-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
+}
+
+.status-confirmed {
+  background: #ccfbf1;
+  color: #115e59;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-cancelled,
+.status-error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.medical-illustration {
+  background:
+    radial-gradient(circle at 22% 22%, rgba(15, 118, 110, 0.16), transparent 28%),
+    linear-gradient(135deg, #fffdf8 0%, #e7efe7 52%, #ccfbf1 100%);
+}
+
+.medical-illustration::before {
+  content: "";
+  position: absolute;
+  inset: 12%;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  border-radius: 32px;
+}
+
+.medical-illustration::after {
+  content: "+";
+  position: absolute;
+  right: 18%;
+  top: 18%;
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  border-radius: 24px;
+  background: #0f766e;
+  color: white;
+  font: 700 46px/1 var(--font-sans);
+  box-shadow: var(--shadow-soft);
 }
 
 /* Smooth micro-animations */
@@ -125,6 +234,24 @@ body {
   animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.2s ease-in-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.18s ease-in-out forwards;
+}
+
 .glow-bg {
   position: absolute;
   width: 400px;
@@ -134,4 +261,23 @@ body {
   pointer-events: none;
   z-index: 0;
   animation: pulseGlow 8s ease-in-out infinite;
+}
+
+@media print {
+  body {
+    background: #ffffff;
+  }
+
+  header,
+  nav,
+  .no-print {
+    display: none !important;
+  }
+
+  .glass-card,
+  .clinical-card {
+    box-shadow: none !important;
+    border-color: #cbd5e1 !important;
+    background: #ffffff !important;
+  }
 }
