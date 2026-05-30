@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Search, 
   Filter, 
@@ -55,6 +56,7 @@ export default function DoctorListingClient({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   // Search local states
   const [search, setSearch] = useState(currentSearch);
@@ -81,7 +83,9 @@ export default function DoctorListingClient({
       params.delete("page");
     }
 
-    router.push(`${pathname}?${params.toString()}`);
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`);
+    });
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -126,7 +130,8 @@ export default function DoctorListingClient({
             placeholder="Search by physician name or keyword..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-xl input-glow"
+            disabled={isPending}
+            className="w-full pl-10 pr-4 py-2.5 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-xl input-glow disabled:opacity-60"
           />
         </div>
 
@@ -141,7 +146,8 @@ export default function DoctorListingClient({
               setSpecialization(e.target.value);
               handleFilterChange(search, e.target.value, 1);
             }}
-            className="w-full pl-10 pr-4 py-2.5 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-xl input-glow appearance-none"
+            disabled={isPending}
+            className="w-full pl-10 pr-4 py-2.5 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-xl input-glow appearance-none disabled:opacity-60"
           >
             <option value="ALL">All Specializations</option>
             {specializations.map((spec, idx) => (
@@ -156,9 +162,17 @@ export default function DoctorListingClient({
         <div>
           <button
             type="submit"
-            className="w-full py-2.5 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-semibold text-sm rounded-xl transition shadow-md shadow-teal-600/10 cursor-pointer"
+            disabled={isPending}
+            className="w-full py-2.5 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-semibold text-sm rounded-xl transition shadow-md shadow-teal-600/10 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
           >
-            Search Directory
+            {isPending ? (
+              <>
+                <Activity className="h-4 w-4 animate-spin" />
+                Searching...
+              </>
+            ) : (
+              "Search Directory"
+            )}
           </button>
         </div>
       </form>
@@ -170,7 +184,8 @@ export default function DoctorListingClient({
             setSpecialization("ALL");
             handleFilterChange(search, "ALL", 1);
           }}
-          className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition ${
+          disabled={isPending}
+          className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition disabled:opacity-60 ${
             specialization === "ALL" ? "border-teal-700 bg-teal-700 text-white" : "border-sage-200 bg-white text-slate-600 hover:border-teal-700"
           }`}
         >
@@ -184,7 +199,8 @@ export default function DoctorListingClient({
               setSpecialization(spec);
               handleFilterChange(search, spec, 1);
             }}
-            className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition ${
+            disabled={isPending}
+            className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition disabled:opacity-60 ${
               specialization === spec ? "border-teal-700 bg-teal-700 text-white" : "border-sage-200 bg-white text-slate-600 hover:border-teal-700"
             }`}
           >
@@ -194,6 +210,16 @@ export default function DoctorListingClient({
       </div>
 
       {/* Main Listing Grid */}
+      <div className="relative">
+        {isPending && (
+          <div className="absolute inset-0 z-10 rounded-2xl bg-white/70 backdrop-blur-[1px]">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-1">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-72 rounded-2xl" />
+              ))}
+            </div>
+          </div>
+        )}
       {initialDoctors.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-slate-200 dark:border-slate-800/85 rounded-2xl p-6 bg-white/40 dark:bg-slate-900/10">
           <div className="p-4 bg-slate-100 dark:bg-slate-900 rounded-full mb-3 text-slate-400">
@@ -279,6 +305,7 @@ export default function DoctorListingClient({
           })}
         </div>
       )}
+      </div>
 
       {/* Pagination Controls */}
       {meta.totalPages > 1 && (
@@ -289,14 +316,14 @@ export default function DoctorListingClient({
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleFilterChange(search, specialization, meta.page - 1)}
-              disabled={meta.page <= 1}
+              disabled={meta.page <= 1 || isPending}
               className="p-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/60 rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-slate-500"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <button
               onClick={() => handleFilterChange(search, specialization, meta.page + 1)}
-              disabled={meta.page >= meta.totalPages}
+              disabled={meta.page >= meta.totalPages || isPending}
               className="p-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/60 rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-slate-500"
             >
               <ChevronRight className="h-4 w-4" />

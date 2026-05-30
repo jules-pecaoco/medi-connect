@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import db from "@/lib/db";
 import { getDoctorAppointments } from "@/actions/appointments";
 import DoctorDashboardClient from "./DoctorDashboardClient";
+import { PageLoadingSkeleton } from "@/components/shared/PageLoadingSkeleton";
 
 export default async function DoctorDashboard() {
   const session = await auth();
@@ -33,7 +35,9 @@ export default async function DoctorDashboard() {
       <div className="glow-bg bottom-[-200px] right-[-200px] opacity-10" />
 
       <div className="z-10 relative">
-        <DoctorDashboardClient user={session.user} profile={profile} appointments={appointments as any} />
+        <Suspense fallback={<PageLoadingSkeleton variant="dashboard" />}>
+          <DoctorDashboardClient user={session.user} profile={profile} appointments={appointments as any} />
+        </Suspense>
       </div>
     </div>
   );

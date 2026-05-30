@@ -2,20 +2,26 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { 
-  ChevronLeft, 
-  FileText, 
-  Printer, 
-  Calendar, 
-  Clock, 
-  User, 
-  Stethoscope, 
-  Activity, 
-  Pill, 
+import {
+  ChevronLeft,
+  FileText,
+  Printer,
+  Calendar,
+  Clock,
+  User,
+  Stethoscope,
+  Activity,
+  Pill,
   ClipboardList,
   HeartHandshake,
-  Download
+  Download,
+  Loader2,
 } from "lucide-react";
+import {
+  buildPrescriptionSlipData,
+  downloadPrescriptionPdf,
+  openPrescriptionPrintWindow,
+} from "@/lib/prescription-slip";
 
 interface TimeSlot {
   id: string;
@@ -28,8 +34,10 @@ interface TimeSlot {
 interface Appointment {
   id: string;
   doctorId: string;
+  updatedAt: Date | string;
   doctor: {
     specialization: string;
+    licenseNumber: string;
     user: {
       name: string | null;
       email: string | null;
@@ -66,109 +74,42 @@ export default function PatientRecordsClient({
   appointments = [],
 }: PatientRecordsClientProps) {
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const formattedDOB = new Date(profile.dateOfBirth).toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
     year: "numeric",
-    timeZone: "UTC"
+    timeZone: "UTC",
   });
 
+  const getSlipData = (appt: Appointment) =>
+    buildPrescriptionSlipData(
+      {
+        appointmentId: appt.id,
+        updatedAt: appt.updatedAt,
+        prescription: appt.prescription,
+        timeSlotDate: appt.timeSlot.date,
+        doctor: appt.doctor,
+      },
+      {
+        name: user.name,
+        dob: formattedDOB,
+        gender: profile.gender,
+      }
+    );
+
   const handlePrintPrescription = (appt: Appointment) => {
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
+    openPrescriptionPrintWindow(getSlipData(appt));
+  };
 
-    const patientName = user.name || "N/A";
-    const dob = formattedDOB;
-    const gender = profile.gender;
-    const doctorName = appt.doctor.user.name || "N/A";
-    const dateFormatted = new Date(appt.timeSlot.date).toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-      timeZone: "UTC",
-    });
-
-    const prescriptionText = appt.prescription || "No prescription issued.";
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Prescription Slip - ${patientName}</title>
-          <style>
-            body { font-family: sans-serif; padding: 40px; color: #1e293b; line-height: 1.5; }
-            .header { border-bottom: 2px solid #0d9488; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
-            .logo { font-size: 24px; font-weight: bold; color: #0d9488; }
-            .clinic-info { text-align: right; font-size: 12px; color: #64748b; }
-            .section { margin-bottom: 25px; }
-            .section-title { font-weight: bold; font-size: 14px; text-transform: uppercase; color: #0d9488; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 15px; }
-            .patient-grid { display: grid; grid-template-cols: 1fr 1fr; gap: 15px; font-size: 13px; background: #f8fafc; padding: 15px; rounded: 8px; border: 1px solid #e2e8f0; }
-            .rx-container { font-family: monospace; font-size: 14px; white-space: pre-wrap; background: #fff; padding: 20px; border: 1px dashed #cbd5e1; border-radius: 8px; margin-top: 15px; min-height: 180px; }
-            .footer { margin-top: 60px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 12px; color: #64748b; }
-            .signature { border-top: 1px solid #94a3b8; width: 200px; text-align: center; padding-top: 8px; }
-            @media print {
-              body { padding: 0; }
-              button { display: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div>
-              <div class="logo">MEDICONNECT</div>
-              <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Premium Virtual Health Telehealth Portal</div>
-            </div>
-            <div class="clinic-info">
-              <strong>MediConnect Care Network</strong><br />
-              Digital Consultation Services<br />
-              support@mediconnect.care
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">Patient Information</div>
-            <div class="patient-grid">
-              <div>
-                <strong>Name:</strong> ${patientName}<br />
-                <strong>Date of Birth:</strong> ${dob}
-              </div>
-              <div>
-                <strong>Gender:</strong> ${gender}<br />
-                <strong>Date of Visit:</strong> ${dateFormatted}
-              </div>
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">Consulting Practitioner</div>
-            <div style="font-size: 13px;">
-              <strong>Dr. ${doctorName}</strong><br />
-              Specialization: ${appt.doctor.specialization}<br />
-              MediConnect Verified Provider
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="section-title" style="display: flex; align-items: center; gap: 5px;">Rx (Prescribed Medications)</div>
-            <div class="rx-container">${prescriptionText}</div>
-          </div>
-
-          <div class="footer">
-            <div>
-              Generated on ${new Date().toLocaleDateString("en-US")}<br />
-              Unique Rx ID: MC-RX-${appt.id.substring(0, 8).toUpperCase()}
-            </div>
-            <div class="signature">
-              <strong>Dr. ${doctorName}</strong><br />
-              Authorized Signature (Digital)
-            </div>
-          </div>
-
-          <script>window.print();</script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+  const handleDownloadPdf = async (appt: Appointment) => {
+    setDownloadingId(appt.id);
+    try {
+      downloadPrescriptionPdf(getSlipData(appt));
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   return (
@@ -241,7 +182,7 @@ export default function PatientRecordsClient({
               </div>
               <h2 className="font-bold text-sm text-teal-700 dark:text-teal-350">Emergency Contact</h2>
             </div>
-            
+
             <div className="text-xs space-y-1">
               <p className="font-semibold text-slate-800 dark:text-slate-200">{profile.emergencyContactName}</p>
               <p className="text-slate-450">{profile.emergencyContactPhone}</p>
@@ -280,7 +221,7 @@ export default function PatientRecordsClient({
                     timeZone: "UTC",
                   });
                   return (
-                    <div 
+                    <div
                       key={appt.id}
                       style={{ animationDelay: `${Math.min(index, 5) * 40}ms` }}
                       className="relative ml-8 p-4 rounded-xl border border-slate-100 dark:border-slate-850 bg-white dark:bg-slate-900/40 transition-[transform,border-color,box-shadow] duration-[var(--motion-normal)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-teal-500/30 hover:shadow-[0_4px_16px_rgba(15,118,110,0.08)] flex flex-col gap-3 animate-slide-up"
@@ -306,7 +247,7 @@ export default function PatientRecordsClient({
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <button
                             onClick={() => setSelectedAppt(appt)}
                             className="inline-flex items-center justify-center gap-1.5 p-2 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-teal-500/10 hover:text-teal-600 text-xs font-bold rounded-lg transition cursor-pointer"
@@ -314,12 +255,26 @@ export default function PatientRecordsClient({
                             <FileText className="h-3.5 w-3.5" /> View Details
                           </button>
                           {appt.prescription && (
-                            <button
-                              onClick={() => handlePrintPrescription(appt)}
-                              className="inline-flex items-center justify-center gap-1.5 p-2 px-3 border border-teal-500/20 hover:bg-teal-500/10 hover:text-teal-600 text-xs font-bold rounded-lg transition text-teal-500 cursor-pointer"
-                            >
-                              <Printer className="h-3.5 w-3.5" /> Print Rx
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handlePrintPrescription(appt)}
+                                className="inline-flex items-center justify-center gap-1.5 p-2 px-3 border border-teal-500/20 hover:bg-teal-500/10 hover:text-teal-600 text-xs font-bold rounded-lg transition text-teal-500 cursor-pointer"
+                              >
+                                <Printer className="h-3.5 w-3.5" /> Print Rx
+                              </button>
+                              <button
+                                onClick={() => handleDownloadPdf(appt)}
+                                disabled={downloadingId === appt.id}
+                                className="inline-flex items-center justify-center gap-1.5 p-2 px-3 border border-teal-500/20 hover:bg-teal-500/10 hover:text-teal-600 text-xs font-bold rounded-lg transition text-teal-500 cursor-pointer disabled:opacity-50"
+                              >
+                                {downloadingId === appt.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Download className="h-3.5 w-3.5" />
+                                )}
+                                Download PDF
+                              </button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -397,12 +352,26 @@ export default function PatientRecordsClient({
                     <Pill className="h-3.5 w-3.5" /> Prescribed Rx Details
                   </h4>
                   {selectedAppt.prescription && (
-                    <button
-                      onClick={() => handlePrintPrescription(selectedAppt)}
-                      className="text-xs font-bold text-teal-650 dark:text-teal-400 flex items-center gap-1 hover:underline cursor-pointer"
-                    >
-                      <Printer className="h-3.5 w-3.5" /> Print Official Slip
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => handlePrintPrescription(selectedAppt)}
+                        className="text-xs font-bold text-teal-650 dark:text-teal-400 flex items-center gap-1 hover:underline cursor-pointer"
+                      >
+                        <Printer className="h-3.5 w-3.5" /> Print
+                      </button>
+                      <button
+                        onClick={() => handleDownloadPdf(selectedAppt)}
+                        disabled={downloadingId === selectedAppt.id}
+                        className="text-xs font-bold text-teal-650 dark:text-teal-400 flex items-center gap-1 hover:underline cursor-pointer disabled:opacity-50"
+                      >
+                        {downloadingId === selectedAppt.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Download className="h-3.5 w-3.5" />
+                        )}
+                        Download PDF
+                      </button>
+                    </div>
                   )}
                 </div>
                 {selectedAppt.prescription ? (

@@ -92,6 +92,8 @@ export async function upsertPatientProfile(input: PatientProfileInput) {
     });
 
     revalidatePath("/patient/dashboard");
+    revalidatePath("/patient/records");
+    revalidatePath("/patient/profile/edit");
     return { success: true };
   } catch (error: any) {
     console.error("Patient profile error:", error);
@@ -137,6 +139,9 @@ export async function upsertDoctorProfile(input: DoctorProfileInput) {
     });
 
     revalidatePath("/doctor/dashboard");
+    revalidatePath("/patient/doctors");
+    revalidatePath("/patient/doctors/[id]");
+    revalidatePath("/doctor/profile/edit");
     return { success: true };
   } catch (error: any) {
     console.error("Doctor profile error:", error);

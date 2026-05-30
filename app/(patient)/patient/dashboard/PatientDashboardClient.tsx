@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/ui/toast";
 import { cancelAppointment, rescheduleAppointment } from "@/actions/appointments";
 import { getDoctorAvailableSlots } from "@/actions/schedule";
@@ -20,6 +20,7 @@ import {
   LayoutDashboard,
   LogOut,
   MoreHorizontal,
+  Pencil,
   RefreshCw,
   ShieldAlert,
   Stethoscope,
@@ -91,12 +92,16 @@ export default function PatientDashboardClient({
   appointments = [],
 }: PatientDashboardClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
+  const [isRefreshing, startRefreshTransition] = useTransition();
 
   const [activeTab, setActiveTab] = useState<PatientTab>("overview");
   const [showMoreTabs, setShowMoreTabs] = useState(false);
   const [pastPage, setPastPage] = useState(1);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [loadingSlotsApptId, setLoadingSlotsApptId] = useState<string | null>(null);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [reschedulingAppt, setReschedulingAppt] = useState<Appointment | null>(null);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -121,6 +126,13 @@ export default function PatientDashboardClient({
     year: "numeric",
   });
 
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab && PATIENT_NAV.some((item) => item.id === tab)) {
+      setActiveTab(tab as PatientTab);
+    }
+  }, [searchParams]);
+
   const handleCancel = async (id: string) => {
     if (!confirm("Are you sure you want to cancel this appointment?")) return;
 
@@ -134,7 +146,7 @@ export default function PatientDashboardClient({
         description: "Your consultation has been cancelled, and the slot is now open.",
         type: "success",
       });
-      router.refresh();
+      startRefreshTransition(() => router.refresh());
     } else {
       toast({
         title: "Cancellation Failed",
@@ -145,6 +157,7 @@ export default function PatientDashboardClient({
   };
 
   const handleOpenReschedule = async (appt: Appointment) => {
+    setLoadingSlotsApptId(appt.id);
     setReschedulingAppt(appt);
     setLoadingSlots(true);
     setSelectedNewSlotId(null);
@@ -152,6 +165,7 @@ export default function PatientDashboardClient({
 
     const result = await getDoctorAvailableSlots(appt.doctorId);
     setLoadingSlots(false);
+    setLoadingSlotsApptId(null);
 
     if (result.success && result.data) {
       setAvailableSlots(result.data as TimeSlot[]);
@@ -178,7 +192,7 @@ export default function PatientDashboardClient({
         type: "success",
       });
       setReschedulingAppt(null);
-      router.refresh();
+      startRefreshTransition(() => router.refresh());
     } else {
       toast({
         title: "Reschedule Failed",
@@ -191,6 +205,11 @@ export default function PatientDashboardClient({
   const switchTab = (tab: PatientTab) => {
     setActiveTab(tab);
     setShowMoreTabs(false);
+  };
+
+  const handleSignOut = () => {
+    setIsSigningOut(true);
+    signOut({ callbackUrl: "/login?role=PATIENT" });
   };
 
   const formatDate = (date: Date | string, long = false) =>
@@ -245,16 +264,33 @@ export default function PatientDashboardClient({
             <>
               <button
                 onClick={() => handleOpenReschedule(appt)}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold transition hover:border-teal-500/30 hover:text-teal-600"
+                disabled={loadingSlotsApptId === appt.id}
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold transition hover:border-teal-500/30 hover:text-teal-600 disabled:opacity-50"
               >
-                <RefreshCw className="h-3.5 w-3.5" /> Reschedule
+                {loadingSlotsApptId === appt.id ? (
+                  <>
+                    <Activity className="h-3.5 w-3.5 animate-spin" /> Loading slots...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-3.5 w-3.5" /> Reschedule
+                  </>
+                )}
               </button>
               <button
                 onClick={() => handleCancel(appt.id)}
                 disabled={cancellingId === appt.id}
                 className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold transition hover:border-red-500/20 hover:bg-red-500/[0.02] hover:text-red-500 disabled:opacity-50"
               >
-                <Trash2 className="h-3.5 w-3.5" /> Cancel
+                {cancellingId === appt.id ? (
+                  <>
+                    <Activity className="h-3.5 w-3.5 animate-spin" /> Cancelling...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-3.5 w-3.5" /> Cancel
+                  </>
+                )}
               </button>
             </>
           )}
@@ -274,43 +310,66 @@ export default function PatientDashboardClient({
   );
 
   const profileContent = (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <div className="glass-card rounded-2xl border border-slate-200/60 p-6 shadow-md">
-        <div className="mb-5 flex items-center gap-3">
-          <div className="rounded-xl bg-teal-500/10 p-2.5 text-teal-600">
-            <User className="h-5 w-5" />
-          </div>
-          <h2 className="text-base font-bold">Health Profile</h2>
-        </div>
-        <div className="space-y-4 text-sm">
-          {[
-            ["Date of Birth", formattedDOB],
-            ["Gender", profile.gender],
-            ["Phone Number", profile.phoneNumber],
-            ["Blood Type", profile.bloodType || "Not specified"],
-          ].map(([label, value]) => (
-            <div key={label} className="flex items-center justify-between border-b border-slate-100 py-2">
-              <span className="text-slate-400">{label}</span>
-              <span className={cn("font-semibold text-slate-700", label === "Blood Type" && "text-teal-600")}>{value}</span>
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-bold text-slate-800">My Profile</h2>
+        <Link
+          href="/patient/profile/edit"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-xs font-bold text-white shadow-sm shadow-teal-600/10 transition hover:bg-teal-700"
+        >
+          <Pencil className="h-3.5 w-3.5" /> Edit Profile
+        </Link>
+      </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="glass-card rounded-2xl border border-slate-200/60 p-6 shadow-md">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="rounded-xl bg-teal-500/10 p-2.5 text-teal-600">
+              <User className="h-5 w-5" />
             </div>
-          ))}
+            <h2 className="text-base font-bold">Health Profile</h2>
+          </div>
+          <div className="space-y-4 text-sm">
+            {[
+              ["Date of Birth", formattedDOB],
+              ["Gender", profile.gender],
+              ["Phone Number", profile.phoneNumber],
+              ["Blood Type", profile.bloodType || "Not specified"],
+            ].map(([label, value]) => (
+              <div key={label} className="flex items-center justify-between border-b border-slate-100 py-2">
+                <span className="text-slate-400">{label}</span>
+                <span className={cn("font-semibold text-slate-700", label === "Blood Type" && "text-teal-600")}>{value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="glass-card rounded-2xl border border-slate-200/60 bg-teal-500/5 p-6 shadow-md">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-xl bg-teal-500/10 p-2.5 text-teal-600">
+              <HeartHandshake className="h-5 w-5" />
+            </div>
+            <h2 className="text-base font-bold text-teal-700">Emergency Contact</h2>
+          </div>
+          <div className="space-y-2 text-sm">
+            <p className="font-semibold text-slate-800">{profile.emergencyContactName}</p>
+            <p className="text-slate-500">{profile.emergencyContactPhone}</p>
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded bg-teal-100 px-2.5 py-1 text-xs font-medium text-teal-700">
+              Verified Emergency Contact
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="glass-card rounded-2xl border border-slate-200/60 bg-teal-500/5 p-6 shadow-md">
+      <div className="glass-card rounded-2xl border border-slate-200/60 p-6 shadow-md">
         <div className="mb-4 flex items-center gap-3">
           <div className="rounded-xl bg-teal-500/10 p-2.5 text-teal-600">
-            <HeartHandshake className="h-5 w-5" />
+            <FileText className="h-5 w-5" />
           </div>
-          <h2 className="text-base font-bold text-teal-700">Emergency Contact</h2>
+          <h2 className="text-base font-bold">Medical History & Allergies</h2>
         </div>
-        <div className="space-y-2 text-sm">
-          <p className="font-semibold text-slate-800">{profile.emergencyContactName}</p>
-          <p className="text-slate-500">{profile.emergencyContactPhone}</p>
-          <div className="mt-2 inline-flex items-center gap-1.5 rounded bg-teal-100 px-2.5 py-1 text-xs font-medium text-teal-700">
-            Verified Emergency Contact
-          </div>
-        </div>
+        <p className="text-sm leading-relaxed text-slate-600">
+          {profile.medicalHistory?.trim() || "No medical history or allergies recorded."}
+        </p>
       </div>
     </div>
   );
@@ -424,7 +483,7 @@ export default function PatientDashboardClient({
     }
 
     if (activeTab === "records") return <div className="animate-fade-in">{recordsContent}</div>;
-    return <div className="animate-fade-in">{profileContent}</div>;
+    return profileContent;
   };
 
   return (
@@ -458,18 +517,36 @@ export default function PatientDashboardClient({
             })}
           </nav>
           <div className="border-t border-sage-200 p-4">
-            <button onClick={() => signOut({ callbackUrl: "/login?role=PATIENT" })} className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-red-500/20 hover:text-red-500">
-              <LogOut className="h-4 w-4" /> Sign Out
+            <button onClick={handleSignOut} disabled={isSigningOut} className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-red-500/20 hover:text-red-500 disabled:opacity-50">
+              {isSigningOut ? (
+                <>
+                  <Activity className="h-4 w-4 animate-spin" /> Signing out...
+                </>
+              ) : (
+                <>
+                  <LogOut className="h-4 w-4" /> Sign Out
+                </>
+              )}
             </button>
           </div>
         </aside>
 
-        <main className="flex-1 pb-24 md:pb-0">
+        <main className="relative flex-1 pb-24 md:pb-0">
           <header className="border-b border-sage-200 bg-warm-100/90 px-4 py-5 backdrop-blur sm:px-6 lg:px-8">
             <h1 className="font-display text-3xl text-teal-950">{currentTab.label}</h1>
             <p className="mt-1 text-sm text-slate-500">Welcome back, <span className="font-semibold text-slate-700">{user.name}</span></p>
           </header>
-          <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">{renderTabContent()}</div>
+          <div className="relative mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+            {renderTabContent()}
+            {isRefreshing && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/60 backdrop-blur-[1px]">
+                <div className="flex items-center gap-2 rounded-xl border border-sage-200 bg-white px-4 py-2 text-sm font-medium text-teal-700 shadow-sm">
+                  <Activity className="h-4 w-4 animate-spin" />
+                  Updating...
+                </div>
+              </div>
+            )}
+          </div>
         </main>
       </div>
 
